@@ -1,0 +1,18 @@
+{
+  "name": "tbp-scraper",
+  "productName": "tpb-scraper",
+  "version": "1.0.0",
+  "description": "To Be Polo Experience Scraper",
+  "main": "./main.prod.js",
+  "author": {
+    "name": "Sebastiano Gaggiano (ed3sign)",
+    "email": "dev@tobepolo.com",
+    "url": "https://gitlab.com/ed3sign/tbp-scraper"
+  },
+  "scripts": {
+    "electron-rebuild": "node -r ../internals/scripts/BabelRegister.js ../internals/scripts/ElectronRebuild.js",
+    "postinstall": "yarn electron-rebuild"
+  },
+  "license": "MIT",
+  "dependencies": {}
+}

@@ -1,0 +1,190 @@
+/*
+ * @NOTE: Prepend a `~` to css file paths that are in your node_modules
+ *        See https://github.com/webpack-contrib/sass-loader#imports
+ */
+@import '~@fortawesome/fontawesome-free/css/all.css';
+
+:root {
+  --primary: #ff512f;
+  --secondary: #dd2476;
+  --tertiary: #ee3a53;
+  --text-primary: #1a1a1a;
+  --light: #f9f9f9;
+  --white: #fff;
+}
+
+body {
+  position: relative;
+  color: var(--text-primary);
+  font-size: 16px;
+  height: 100vh;
+  background-color: var(--light);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  overflow-y: scroll;
+  padding: 0;
+  margin: 0;
+}
+
+h2 {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+p {
+  font-size: 24px;
+}
+
+li {
+  list-style: none;
+}
+
+a {
+  opacity: 0.75;
+  text-decoration: none;
+}
+
+a:hover {
+  opacity: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn {
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  line-height: 1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: .35s all;
+}
+
+.btn-primary{
+  background: var(--primary);
+  color: var(--white);
+  border: 1px solid var(--primary);
+}
+
+.btn-secondary{
+  background: var(--secondary);
+  color: var(--white);
+  border: 1px solid var(--secondary);
+}
+
+.btn-sm{
+  font-size: .85rem;
+  padding: .4rem .75rem
+}
+
+.btn:hover:not(:disabled){
+  transition: .35s all;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.btn-outline{
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.btn-outline:hover:not(:disabled){
+  background: var(--primary);
+  color: var(--white);
+}
+
+.container{
+  padding: 1.5rem;
+}
+
+.logger{
+  font-size: .8rem;
+  font-family: monospace;
+  height: 225px;
+  max-height: 225px;
+  overflow-y: scroll;
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.logger pre{
+  margin: 0;
+}
+
+.file-path{
+  font-size: .8rem;
+}
+
+.form-group{
+  margin-bottom: 1rem;
+}
+
+.form-group:last-child{
+  margin-bottom: 0;
+}
+
+label, .label{
+  font-size: .8rem;
+  font-weight: 500;
+  opacity: .9;
+}
+
+label input{
+  margin-top: .5rem;
+}
+
+.form-control{
+  position: relative;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 38px;
+  font-size: 1rem;
+  border: 1px solid hsl(0,0%,80%);
+  padding: 0 .75rem;
+  border-radius: 4px;
+}
+
+hr{
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid hsl(0,0%,95%);
+}
+
+.text-right{
+  text-align: right;
+}
+
+.mt-0{
+  margin-top: 0 !important;
+}
+
+.mb-0{
+  margin-bottom: 0 !important;
+}
+
+.mb-2{
+  margin-bottom: .5rem !important;
+}
+
+.mb-3{
+  margin-bottom: .75rem !important;
+}
+
+.mb-4{
+  margin-bottom: 1rem !important;
+}
+
+.mr-3{
+  margin-right: .75rem !important;
+}
+
+.mr-3{
+  margin-right: .75rem;
+}
