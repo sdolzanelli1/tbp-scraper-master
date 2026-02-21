@@ -20,7 +20,7 @@ export const fetchChrome = async () => {
   if (process.platform === 'darwin') {
     browserPath = '/Applications/Chromium.app/Contents/MacOS/Chromium';
   } else if (process.platform === 'win32') {
-    browserPath = 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe';
+    browserPath = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
   }
 
   const store = new Store();
