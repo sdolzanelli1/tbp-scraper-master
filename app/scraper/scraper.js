@@ -19,6 +19,7 @@ const puppeteer = require('puppeteer-core');
 // const AdblockerPlugin = require('puppeteer-extra-plugin-adblocker');
 const _ = require('lodash');
 const Store = require('electron-store');
+const axios = require('axios');
 
 const store = new Store();
 // puppeteer.use(StealthPlugin());
@@ -143,40 +144,35 @@ export const scrapeWebpage = async (link) => {
 };
 
 export const scrapeLinks = async (query) => {
-  let page;
   const links = [];
-  page = await browser.newPage();
-  await page.goto('https://google.com', {
-    waitUntil: 'domcontentloaded',
-    timeout: 60000,
-  });
-  await page.type('input.gLFyf.gsfi', `${query}`);
-  await page.keyboard.press('Enter');
-  await page.waitForSelector('div#rso');
-  await page.waitFor(1000);
-
-  const urls = await page.$$eval('div.yuRUbf > a', (anchors) => {
-    return anchors.map((anchor) => {
-      return anchor.href;
-    });
-  });
-
-  const descriptions = await page.$$eval('.aCOpRe', (desc) => {
-    return desc.map((d) => {
-      return d.textContent;
-    });
-  });
-
-  for (let i = 0; i < urls.length; i += 1) {
-    if (testURL(urls[i])) {
-      links.push({
-        url: urls[i],
-        desc: descriptions[i],
-      });
+  try {
+    const apiKey = process.env.SERPAPI_KEY;
+    if (!apiKey) {
+      logger('SerpApi key not found in store or SERPAPI_KEY env var');
+      return links;
     }
-  }
 
-  await page.close();
+    const res = await axios.get('https://serpapi.com/search', {
+      params: {
+        q: query,
+        engine: 'google',
+        api_key: apiKey,
+        num: 10,
+      },
+      timeout: 15000,
+    });
+
+    const results = res.data.organic_results || res.data.orgic || res.data.organic || [];
+    for (const r of results) {
+      const url = r.link || r.url || '';
+      const desc = r.snippet || r.title || '';
+      if (url && testURL(url)) {
+        links.push({ url, desc });
+      }
+    }
+  } catch (err) {
+    logger(`SerpApi error: ${err && err.message ? err.message : err}`);
+  }
   return links;
 };
 
