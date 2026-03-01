@@ -2,6 +2,7 @@
 /* eslint-disable prettier/prettier */
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
+import iconImage from '../../resources/icon.png';
 
 const { ipcRenderer } = require('electron');
 
@@ -167,7 +168,10 @@ export default function Home(): JSX.Element {
 
   return (
     <div className="container">
-      <h2>Colombo</h2>
+      <div style={{ backgroundColor: '#29040a', padding: '1rem', borderRadius: '4px', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+        <img src={iconImage} alt="Colombo Icon" style={{ height: '40px', marginRight: '12px' }} />
+        <h2 style={{ margin: 0, color: 'white' }}>Colombo</h2>
+      </div>
       <div className="mb-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ minWidth: 0 }}>
           <button type="button" disabled={isScraping} className="btn btn-sm btn-outline mr-3" onClick={(e) => onSetOutputPath(e)}>
