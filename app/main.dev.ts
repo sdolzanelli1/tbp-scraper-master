@@ -152,6 +152,14 @@ ipcMain.once('init', async (event) => {
 });
 
 ipcMain.on('scrape-start', async (event, arg) => {
+  try {
+    if (arg && arg.serperKey) {
+      const store = new Store();
+      store.set('serperKey', arg.serperKey);
+    }
+  } catch (e) {
+    // ignore
+  }
   await scrapeResults(arg, tags);
   event.reply('scrape-stop');
 });
@@ -177,4 +185,24 @@ ipcMain.on('set-browser-path', async (event) => {
   const store = new Store();
   store.set('outputPath', outputPath.filePaths[0]);
   event.reply('set-browser-path-reply', outputPath.filePaths[0]);
+});
+
+// IPC to set/get serper.dev API key persisted via electron-store
+ipcMain.on('set-serper-key', async (_event, key) => {
+  try {
+    const store = new Store();
+    store.set('serperKey', key);
+  } catch (e) {
+    // ignore
+  }
+});
+
+ipcMain.on('get-serper-key', async (event) => {
+  try {
+    const store = new Store();
+    const key = store.get('serperKey');
+    event.reply('get-serper-key-reply', key || null);
+  } catch (e) {
+    event.reply('get-serper-key-reply', null);
+  }
 });

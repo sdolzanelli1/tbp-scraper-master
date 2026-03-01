@@ -178,11 +178,18 @@ export const scrapeWebpage = async (link) => {
 export const scrapeLinks = async (query) => {
   const links = [];
   try {
-    const apiKey = process.env.SERPERDEV_KEY || store.get('serperKey');
+    const runtimeStore = new Store();
+    let apiKey = runtimeStore.get('serperKey');
+    if (apiKey && typeof apiKey !== 'string') apiKey = String(apiKey);
     if (!apiKey) {
       logger('Serper.dev key not found in env var SERPERDEV_KEY or store.serperKey');
       return links;
     }
+    // log presence of key (masked) for debugging
+    try {
+      const masked = apiKey.length > 8 ? `${apiKey.slice(0,4)}...${apiKey.slice(-4)}` : '****';
+      logger(`Using Serper.dev key: ${masked}`);
+    } catch (e) {}
 
     const res = await axios.post(
       'https://google.serper.dev/search',
