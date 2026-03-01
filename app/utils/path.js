@@ -8,7 +8,7 @@ const Store = require('electron-store');
 // Path config
 export const RESOURCES_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'resources')
-  : path.join(__dirname, '../../resources');
+  : path.join(process.cwd(), 'resources');
 
 export const getAssetPath = (paths) => {
   return path.join(RESOURCES_PATH, paths);

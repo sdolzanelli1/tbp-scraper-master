@@ -74,6 +74,11 @@ export default function Home(): JSX.Element {
       setIsScraping(false);
     })
 
+    ipcRenderer.on('scrape-error', (_event, arg) => {
+      setIsScraping(false);
+      setLogs(logs => [`ERROR: ${arg.message}`, ...logs]);
+    })
+
     ipcRenderer.on('logger', (_event, arg) => {
       setLogs(logs => [arg.message, ...logs]);
     })

@@ -118,35 +118,67 @@ app.on('window-all-closed', () => {
   }
 });
 
+// Read data from CSV
+const loadDataAsync = async () => {
+  const tagsFilePath = getAssetPath('data/tags.csv');
+  const locationsFilePath = getAssetPath('data/locations.csv');
+
+  let tags: any = [];
+  let regions: any = [];
+  let locations: any = [];
+
+  try {
+    tags = await loadTags(tagsFilePath);
+    const locData = await loadLocations(locationsFilePath);
+    regions = locData.regions;
+    locations = locData.locations;
+    
+    if (!tags || tags.length === 0) {
+      log.warn('Warning: No tags loaded from CSV');
+    }
+    if (!regions || regions.length === 0) {
+      log.warn('Warning: No regions loaded from CSV');
+    }
+    if (!locations || locations.length === 0) {
+      log.warn('Warning: No locations loaded from CSV');
+    }
+    log.info(`Loaded ${tags.length} tags, ${regions.length} regions, ${locations.length} locations`);
+  } catch (error) {
+    log.error('Failed to load CSV data files:', error);
+  }
+
+  return { tags, regions, locations };
+};
+
+let csvData = { tags: [], regions: [], locations: [] };
+
 if (process.env.E2E_BUILD === 'true') {
   app
     .whenReady()
-    .then(createWindow)
+    .then(async () => {
+      csvData = await loadDataAsync();
+      await createWindow();
+    })
     .catch((err) => console.log(err));
 } else {
-  app.on('ready', createWindow);
+  app.on('ready', async () => {
+    csvData = await loadDataAsync();
+    await createWindow();
+  });
 }
 
 app.on('activate', () => {
   if (mainWindow === null) createWindow();
 });
 
-// Read data from CSV
-const tagsFilePath = getAssetPath('data/tags.csv');
-const locationsFilePath = getAssetPath('data/locations.csv');
-
-const tags: any = loadTags(tagsFilePath);
-const { regions } = loadLocations(locationsFilePath);
-const { locations } = loadLocations(locationsFilePath);
-
 ipcMain.once('init', async (event) => {
   // Detect Chrome Path
   const browser = await fetchChrome();
 
   const data = {
-    tags,
-    regions,
-    locations,
+    tags: csvData.tags,
+    regions: csvData.regions,
+    locations: csvData.locations,
     browser,
   };
   event.reply('init-reply', data);
@@ -161,7 +193,12 @@ ipcMain.on('scrape-start', async (event, arg) => {
   } catch (e) {
     // ignore
   }
-  await scrapeResults(arg, tags);
+  try {
+    await scrapeResults(arg, csvData.tags);
+  } catch (error) {
+    log.error('Scraping error:', error);
+    event.reply('scrape-error', { message: error.message || 'Unknown error occurred' });
+  }
   event.reply('scrape-stop');
 });
 
