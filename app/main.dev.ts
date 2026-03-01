@@ -21,6 +21,7 @@ import { getAssetPath, fetchChrome } from './utils/path';
 
 const { dialog } = require('electron');
 const Store = require('electron-store');
+require('dotenv').config();
 
 export default class AppUpdater {
   constructor() {
@@ -200,7 +201,12 @@ ipcMain.on('set-serper-key', async (_event, key) => {
 ipcMain.on('get-serper-key', async (event) => {
   try {
     const store = new Store();
-    const key = store.get('serperKey');
+    const savedKey = store.get('serperKey');
+    const envKey = process.env.SERPERDEV_KEY;
+    const key = (savedKey || envKey || '').toString().trim();
+    if (!savedKey && key) {
+      store.set('serperKey', key);
+    }
     event.reply('get-serper-key-reply', key || null);
   } catch (e) {
     event.reply('get-serper-key-reply', null);
