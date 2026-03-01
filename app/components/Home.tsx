@@ -168,17 +168,38 @@ export default function Home(): JSX.Element {
   return (
     <div className="container">
       <h2>Colombo</h2>
-      <div className="mb-3">
-        <button type="button" disabled={isScraping} className="btn btn-sm btn-outline mr-3" onClick={(e) => onSetOutputPath(e)}>
-          Choose Destination
-        </button>
-        <span className="file-path">{ outputPath }</span>
-      </div>
-      <div className="mb-3">
-        <button type="button" className="btn btn-sm btn-outline mr-3" onClick={(e) => openKeyModal(e)}>
-          Set API key
-        </button>
-        {!hasSerperKey && <span className="text-danger">API key missing</span>}
+      <div className="mb-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ minWidth: 0 }}>
+          <button type="button" disabled={isScraping} className="btn btn-sm btn-outline mr-3" onClick={(e) => onSetOutputPath(e)}>
+            Choose Destination
+          </button>
+          <span className="file-path">{ outputPath }</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 12 }}>
+          {!hasSerperKey && (
+            <span
+              style={{
+                display: 'inline-block',
+                marginRight: 8,
+                padding: '3px 8px',
+                border: '1px solid #555',
+                borderRadius: 4,
+                color: '#555',
+                fontSize: 12,
+              }}
+            >
+              API key missing
+            </span>
+          )}
+          <button
+            type="button"
+            className="btn btn-sm"
+            style={{ border: '1px solid #555', color: '#555', background: 'transparent' }}
+            onClick={(e) => openKeyModal(e)}
+          >
+            ⚙ Advanced
+          </button>
+        </div>
       </div>
       <hr />
       <div className="form-group">
