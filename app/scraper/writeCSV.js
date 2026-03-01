@@ -12,6 +12,7 @@ const _ = require('lodash');
 // column definitions for csv output; a tag field is now included so
 // each record can be traced back to the query/tag that generated it.
 const csvHeader = [
+  { id: 'tag', title: 'Tag' },
   { id: 'title', title: 'Title' },
   { id: 'description', title: 'Description' },
   { id: 'url', title: 'Url' },
@@ -22,7 +23,6 @@ const csvHeader = [
   { id: 'twitter', title: 'Twitter' },
   { id: 'linkedin', title: 'LinkedIn' },
   { id: 'meta', title: 'Meta Tags' },
-  { id: 'tag', title: 'Tag' }, // newly added column
 ];
 
 export const writeCSV = (path, records) => {

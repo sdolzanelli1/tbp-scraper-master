@@ -28,6 +28,9 @@ const store = new Store();
 // puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 let browser = null;
 let stopScraping = false;
+// store a reference to the current csv stream end function so we can
+// close the file when scraping is aborted via IPC
+let currentCsvEnd = null;
 const headless = process.env.NODE_ENV === 'production';
 
 export const formatData = (data) => {
@@ -227,44 +230,66 @@ export const scrapeResults = async (query, tags) => {
     }
   }
   const { write: writeCsvRecord, end: endCsv } = createCsvStream(csvFile);
+  // keep global reference so the IPC handler can finish the stream
+  currentCsvEnd = endCsv;
 
   let links = [];
 
-  if (query.custom.length > 0) {
-    logger(`START: ${query.custom}`);
-    links = await scrapeLinks(query.custom);
-    for await (const link of links) {
-      const res = await scrapeWebpage(link);
-      if (res) {
-        res.tag = query.custom;
-        writeCsvRecord(res);
-      }
-    }
-    logger(`END: ${query.custom}`);
-  } else {
-    tags = tags.slice(tags.indexOf(query.tag), tags.length);
-    for await (const tag of tags) {
-      logger(`START: ${tag} ${query.location}`);
-      links = await scrapeLinks(`${tag} ${query.location}`);
+  try {
+    if (query.custom.length > 0) {
+      logger(`START: ${query.custom}`);
+      links = await scrapeLinks(query.custom);
       for await (const link of links) {
+        if (stopScraping) break;
         const res = await scrapeWebpage(link);
         if (res) {
-          res.tag = tag;
+          res.tag = query.custom;
           writeCsvRecord(res);
         }
       }
-      logger(`END: ${tag} ${query.location}`);
+      logger(`END: ${query.custom}`);
+    } else {
+      tags = tags.slice(tags.indexOf(query.tag), tags.length);
+      for await (const tag of tags) {
+        if (stopScraping) break;
+        logger(`START: ${tag} ${query.location}`);
+        links = await scrapeLinks(`${tag} ${query.location}`);
+        for await (const link of links) {
+          if (stopScraping) break;
+          const res = await scrapeWebpage(link);
+          if (res) {
+            res.tag = tag;
+            writeCsvRecord(res);
+          }
+        }
+        logger(`END: ${tag} ${query.location}`);
+      }
     }
+  } finally {
+    // always close the csv stream even if we aborted or errored
+    if (currentCsvEnd) {
+      await currentCsvEnd();
+      currentCsvEnd = null;
+    }
+    if (browser) {
+      await browser.close();
+    }
+    logger(`DONE`);
   }
-
-  await endCsv();
-  await browser.close();
-  logger(`DONE`);
 };
 
 ipcMain.on('scrape-stop', async () => {
   logger(`STOPPED`);
   stopScraping = true;
+  // close any existing CSV stream so file handle is released
+  if (currentCsvEnd) {
+    try {
+      await currentCsvEnd();
+    } catch (e) {
+      logger(`error closing csv stream: ${e.message}`);
+    }
+    currentCsvEnd = null;
+  }
   if (browser) await browser.close();
 });
 
