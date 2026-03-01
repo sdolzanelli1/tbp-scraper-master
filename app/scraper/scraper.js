@@ -115,12 +115,18 @@ export const scrapeInfo = async (page, link) => {
 export const scrapeWebpage = async (link) => {
   let page;
   let info = {};
+  const TIMEOUT = 15000; // 15 second timeout for entire operation
 
   try {
     page = await browser.newPage();
+    
+    // Set page timeout and navigation timeout
+    page.setDefaultNavigationTimeout(TIMEOUT);
+    page.setDefaultTimeout(TIMEOUT);
+    
     await page.goto(link.url, {
       waitUntil: 'domcontentloaded',
-      timeout: 60000,
+      timeout: 10000,
     });
 
     logger(`URL: ${link.url}`);
@@ -129,20 +135,36 @@ export const scrapeWebpage = async (link) => {
   } catch (err) {
     logger(err);
     try {
-      await page.reload();
+      // Attempt reload with timeout
+      await Promise.race([
+        page.reload(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Reload timeout')), 5000)
+        ),
+      ]);
     } catch (recoveringErr) {
       logger(recoveringErr);
       try {
-        await browser.close();
+        // Close browser with timeout
+        await Promise.race([
+          browser.close(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Browser close timeout')), 5000)
+          ),
+        ]);
       } catch (finalErr) {
         logger(finalErr);
       }
       if (!stopScraping) {
-        browser = initBrowser();
+        browser = await initBrowser();
         page = await browser.newPage();
       }
     }
-    await page.close();
+    try {
+      await page.close();
+    } catch (closeErr) {
+      logger(closeErr);
+    }
     return info;
   }
 };
