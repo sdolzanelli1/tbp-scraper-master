@@ -20,6 +20,7 @@ export default function Home(): JSX.Element {
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [serperKey, setSerperKey] = useState('');
+  const hasSerperKey = serperKey.trim().length > 0;
 
   if (tags.length === 0 || regions.length === 0) {
     ipcRenderer.send('init');
@@ -88,8 +89,10 @@ export default function Home(): JSX.Element {
 
   const saveSerperKey = (e) => {
     e.preventDefault();
-    try { window.localStorage.setItem('serperKey', serperKey); } catch (err) {}
-    ipcRenderer.send('set-serper-key', serperKey);
+    const trimmedKey = serperKey.trim();
+    setSerperKey(trimmedKey);
+    try { window.localStorage.setItem('serperKey', trimmedKey); } catch (err) {}
+    ipcRenderer.send('set-serper-key', trimmedKey);
     setShowKeyModal(false);
   };
 
@@ -175,6 +178,7 @@ export default function Home(): JSX.Element {
         <button type="button" className="btn btn-sm btn-outline mr-3" onClick={(e) => openKeyModal(e)}>
           Set API key
         </button>
+        {!hasSerperKey && <span className="text-danger">API key missing</span>}
       </div>
       <hr />
       <div className="form-group">
@@ -234,7 +238,7 @@ export default function Home(): JSX.Element {
           <div style={{ width: 480, margin: '8% auto', background: '#fff', padding: 20, borderRadius: 6 }}>
             <h4>Set Serper.dev API Key</h4>
             <p style={{ marginTop: 8 }}>
-              <input type="text" className="form-control" value={serperKey} onChange={e => setSerperKey(e.target.value)} placeholder="Paste your Serper.dev key here" />
+              <input type="password" className="form-control" value={serperKey} onChange={e => setSerperKey(e.target.value)} placeholder="Paste your Serper.dev key here" />
             </p>
             <div style={{ textAlign: 'right', marginTop: 12 }}>
               <button className="btn btn-sm btn-outline mr-2" onClick={closeKeyModal}>Cancel</button>
