@@ -9,6 +9,8 @@ const { dialog } = require('electron');
 const Store = require('electron-store');
 const _ = require('lodash');
 
+// column definitions for csv output; a tag field is now included so
+// each record can be traced back to the query/tag that generated it.
 const csvHeader = [
   { id: 'title', title: 'Title' },
   { id: 'description', title: 'Description' },
@@ -20,6 +22,7 @@ const csvHeader = [
   { id: 'twitter', title: 'Twitter' },
   { id: 'linkedin', title: 'LinkedIn' },
   { id: 'meta', title: 'Meta Tags' },
+  { id: 'tag', title: 'Tag' }, // newly added column
 ];
 
 export const writeCSV = (path, records) => {
@@ -83,3 +86,31 @@ export const saveFile = async (records, title) => {
   fs.writeFileSync(`${savepath}.csv`, csv, 'utf-8');
   logger(`OUTPUT: csv file written ${savepath}.csv`);
 };
+
+// ---------- streaming helpers ----------
+// these functions let us open a CSV once and write rows as they come,
+// avoiding the need to accumulate large arrays in memory.
+export const createCsvStream = (outputPath) => {
+  const csvStringifier = createCsvStringifier({
+    header: csvHeader,
+    fieldDelimiter: ';',
+  });
+
+  const shouldWriteHeader = !fs.existsSync(outputPath);
+  const stream = fs.createWriteStream(outputPath, { flags: 'a' });
+  if (shouldWriteHeader) {
+    stream.write(csvStringifier.getHeaderString());
+  }
+
+  return {
+    write: (record) => {
+      // ensure that the record at least has the tag property defined
+      stream.write(csvStringifier.stringifyRecords([record]));
+    },
+    end: () =>
+      new Promise((resolve) => {
+        stream.end(() => resolve());
+      }),
+  };
+};
+

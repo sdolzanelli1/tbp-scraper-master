@@ -2,7 +2,9 @@
 import { ipcMain } from 'electron';
 import { getAssetPath } from '../utils/path';
 import { logger } from '../utils/logger';
-import { saveFile } from './writeCSV';
+import { createCsvStream } from './writeCSV';
+import path from 'path';
+const fs = require('fs');
 import {
   facebookRegex,
   instagramRegex,
@@ -213,35 +215,49 @@ export const scrapeLinks = async (query) => {
 
 export const scrapeResults = async (query, tags) => {
   await initBrowser();
+  const store = new Store();
+  const outputPath = store.get('outputPath') || '.';
+  const csvFile = path.join(outputPath, 'tbp_results.csv');
+  // remove any existing file so header is written fresh
+  if (fs.existsSync(csvFile)) {
+    try {
+      fs.unlinkSync(csvFile);
+    } catch (err) {
+      logger(`Unable to clear previous CSV: ${err.message}`);
+    }
+  }
+  const { write: writeCsvRecord, end: endCsv } = createCsvStream(csvFile);
+
   let links = [];
 
   if (query.custom.length > 0) {
-    const data = [];
     logger(`START: ${query.custom}`);
     links = await scrapeLinks(query.custom);
     for await (const link of links) {
       const res = await scrapeWebpage(link);
-      if (res) data.push(res);
+      if (res) {
+        res.tag = query.custom;
+        writeCsvRecord(res);
+      }
     }
-    await saveFile(data, `tbp_${_.snakeCase(query.custom)}`);
     logger(`END: ${query.custom}`);
   } else {
     tags = tags.slice(tags.indexOf(query.tag), tags.length);
     for await (const tag of tags) {
-      const data = [];
       logger(`START: ${tag} ${query.location}`);
       links = await scrapeLinks(`${tag} ${query.location}`);
       for await (const link of links) {
         const res = await scrapeWebpage(link);
-        if (res) data.push(res);
+        if (res) {
+          res.tag = tag;
+          writeCsvRecord(res);
+        }
       }
-      await saveFile(
-        data,
-        `tbp_${_.snakeCase(tag)}_${_.snakeCase(query.location)}`
-      );
       logger(`END: ${tag} ${query.location}`);
     }
   }
+
+  await endCsv();
   await browser.close();
   logger(`DONE`);
 };
