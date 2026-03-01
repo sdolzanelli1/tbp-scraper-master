@@ -175,6 +175,36 @@ export const scrapeWebpage = async (link) => {
   }
 };
 
+export const validateSerperKey = async (apiKey) => {
+  try {
+    const res = await axios.post(
+      'https://google.serper.dev/search',
+      {
+        q: 'test',
+        hl: 'it',
+        gl: 'it',
+        num: 1,
+      },
+      {
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      }
+    );
+    return { valid: true, message: 'API key is valid' };
+  } catch (err) {
+    const errorMessage = err && err.response && err.response.data && err.response.data.error
+      ? err.response.data.error
+      : err.message || 'Unknown error';
+    return { 
+      valid: false, 
+      message: `Invalid Serper.dev API key: ${errorMessage}` 
+    };
+  }
+};
+
 export const scrapeLinks = async (query) => {
   const links = [];
   try {
@@ -244,6 +274,26 @@ export const scrapeResults = async (query, tags) => {
   await initBrowser();
   const store = new Store();
   const outputPath = store.get('outputPath') || '.';
+  
+  // Validate Serper API key before starting
+  let apiKey = store.get('serperKey');
+  if (apiKey && typeof apiKey !== 'string') apiKey = String(apiKey);
+  
+  if (!apiKey) {
+    logger('ERROR: Serper.dev key not found. Please set your API key before scraping.');
+    if (browser) await browser.close();
+    throw new Error('Serper.dev API key is missing');
+  }
+  
+  const validation = await validateSerperKey(apiKey);
+  if (!validation.valid) {
+    logger(`ERROR: ${validation.message}`);
+    if (browser) await browser.close();
+    throw new Error(validation.message);
+  }
+  
+  logger('Serper.dev API key validated successfully');
+  
   // pick a unique csv file name so we don't overwrite previous results
   const csvFile = getUniquePath(outputPath, 'tbp_' + getStringWithDashInsteadOfSpaces(query.location) + '_results');
   const { write: writeCsvRecord, end: endCsv } = createCsvStream(csvFile);
