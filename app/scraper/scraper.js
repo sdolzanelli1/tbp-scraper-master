@@ -41,7 +41,8 @@ export const initBrowser = async () => {
   stopScraping = false;
   if (browser) browser.close();
   try {
-    const chromePath = store.get('browserPath');
+    // TODO: make this dynamic for different OS and setups
+    const chromePath = "C:/Program Files/Google/Chrome/Application/chrome.exe";
     browser = await puppeteer.launch({
       headless,
       executablePath: chromePath,
@@ -146,32 +147,41 @@ export const scrapeWebpage = async (link) => {
 export const scrapeLinks = async (query) => {
   const links = [];
   try {
-    const apiKey = process.env.SERPAPI_KEY;
+    const apiKey = process.env.SERPERDEV_KEY || store.get('serperKey');
     if (!apiKey) {
-      logger('SerpApi key not found in store or SERPAPI_KEY env var');
+      logger('Serper.dev key not found in env var SERPERDEV_KEY or store.serperKey');
       return links;
     }
 
-    const res = await axios.get('https://serpapi.com/search', {
-      params: {
+    const res = await axios.post(
+      'https://google.serper.dev/search',
+      {
         q: query,
-        engine: 'google',
-        api_key: apiKey,
+        hl: 'it',
+        gl: 'it',
         num: 10,
       },
-      timeout: 15000,
-    });
+      {
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000,
+      }
+    );
 
-    const results = res.data.organic_results || res.data.orgic || res.data.organic || [];
+    const data = res && res.data ? res.data : {};
+    const results = data.organic || data.orgic || data.organic_results || data.results || [];
+
     for (const r of results) {
-      const url = r.link || r.url || '';
-      const desc = r.snippet || r.title || '';
+      const url = r.link || r.url || r.source || r.displayed_link || '';
+      const desc = r.snippet || r.description || r.title || '';
       if (url && testURL(url)) {
         links.push({ url, desc });
       }
     }
   } catch (err) {
-    logger(`SerpApi error: ${err && err.message ? err.message : err}`);
+    logger(`Serper.dev error: ${err && err.message ? err.message : err}`);
   }
   return links;
 };
