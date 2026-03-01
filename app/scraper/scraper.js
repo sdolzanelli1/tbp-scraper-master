@@ -216,19 +216,28 @@ export const scrapeLinks = async (query) => {
   return links;
 };
 
+
+// helper to generate a unique filepath by appending _2, _3, etc. if the base already exists
+export const getUniquePath = (dir, baseName) => {
+  let counter = 1;
+  let candidate = path.join(dir, `${baseName}.csv`);
+  while (fs.existsSync(candidate)) {
+    counter += 1;
+    candidate = path.join(dir, `${baseName}_${counter}.csv`);
+  }
+  return candidate;
+};
+
+export const getStringWithDashInsteadOfSpaces = (str) => {
+  return str.replace(/\s+/g, '-');
+};
+
 export const scrapeResults = async (query, tags) => {
   await initBrowser();
   const store = new Store();
   const outputPath = store.get('outputPath') || '.';
-  const csvFile = path.join(outputPath, 'tbp_results.csv');
-  // remove any existing file so header is written fresh
-  if (fs.existsSync(csvFile)) {
-    try {
-      fs.unlinkSync(csvFile);
-    } catch (err) {
-      logger(`Unable to clear previous CSV: ${err.message}`);
-    }
-  }
+  // pick a unique csv file name so we don't overwrite previous results
+  const csvFile = getUniquePath(outputPath, 'tbp_' + getStringWithDashInsteadOfSpaces(query.location) + '_results');
   const { write: writeCsvRecord, end: endCsv } = createCsvStream(csvFile);
   // keep global reference so the IPC handler can finish the stream
   currentCsvEnd = endCsv;
