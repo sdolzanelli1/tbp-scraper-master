@@ -17,10 +17,11 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { loadTags, loadLocations } from './scraper/parseCSV';
 import { scrapeResults } from './scraper/scraper';
-import { getAssetPath, fetchChrome } from './utils/path';
+import { getAssetPath } from './utils/path';
 
 const { dialog } = require('electron');
 const Store = require('electron-store');
+require('dotenv').config();
 
 export default class AppUpdater {
   constructor() {
@@ -117,42 +118,83 @@ app.on('window-all-closed', () => {
   }
 });
 
+// Read data from CSV
+const loadDataAsync = async () => {
+  const tagsFilePath = getAssetPath('data/tags.csv');
+  const locationsFilePath = getAssetPath('data/locations.csv');
+
+  let tags: any = [];
+  let regions: any = [];
+  let locations: any = [];
+
+  try {
+    tags = await loadTags(tagsFilePath);
+    const locData = await loadLocations(locationsFilePath);
+    regions = locData.regions;
+    locations = locData.locations;
+    
+    if (!tags || tags.length === 0) {
+      log.warn('Warning: No tags loaded from CSV');
+    }
+    if (!regions || regions.length === 0) {
+      log.warn('Warning: No regions loaded from CSV');
+    }
+    if (!locations || locations.length === 0) {
+      log.warn('Warning: No locations loaded from CSV');
+    }
+    log.info(`Loaded ${tags.length} tags, ${regions.length} regions, ${locations.length} locations`);
+  } catch (error) {
+    log.error('Failed to load CSV data files:', error);
+  }
+
+  return { tags, regions, locations };
+};
+
+let csvData = { tags: [], regions: [], locations: [] };
+
 if (process.env.E2E_BUILD === 'true') {
   app
     .whenReady()
-    .then(createWindow)
+    .then(async () => {
+      csvData = await loadDataAsync();
+      await createWindow();
+    })
     .catch((err) => console.log(err));
 } else {
-  app.on('ready', createWindow);
+  app.on('ready', async () => {
+    csvData = await loadDataAsync();
+    await createWindow();
+  });
 }
 
 app.on('activate', () => {
   if (mainWindow === null) createWindow();
 });
 
-// Read data from CSV
-const tagsFilePath = getAssetPath('data/tags.csv');
-const locationsFilePath = getAssetPath('data/locations.csv');
-
-const tags: any = loadTags(tagsFilePath);
-const { regions } = loadLocations(locationsFilePath);
-const { locations } = loadLocations(locationsFilePath);
-
 ipcMain.once('init', async (event) => {
-  // Detect Chrome Path
-  const browser = await fetchChrome();
-
   const data = {
-    tags,
-    regions,
-    locations,
-    browser,
+    tags: csvData.tags,
+    regions: csvData.regions,
+    locations: csvData.locations,
   };
   event.reply('init-reply', data);
 });
 
 ipcMain.on('scrape-start', async (event, arg) => {
-  await scrapeResults(arg, tags);
+  try {
+    if (arg && arg.serperKey) {
+      const store = new Store();
+      store.set('serperKey', arg.serperKey);
+    }
+  } catch (e) {
+    // ignore
+  }
+  try {
+    await scrapeResults(arg, csvData.tags);
+  } catch (error) {
+    log.error('Scraping error:', error);
+    event.reply('scrape-error', { message: error.message || 'Unknown error occurred' });
+  }
   event.reply('scrape-stop');
 });
 
@@ -166,15 +208,53 @@ ipcMain.on('set-path', async (event) => {
 });
 
 ipcMain.on('set-browser-path', async (event) => {
-  const outputPath = await dialog.showOpenDialog({
+  const browserPathResult = await dialog.showOpenDialog({
     properties: ['openFile'],
     defaultPath: 'c:/',
     filters: [
+      { name: 'Executable Files', extensions: ['exe', 'app'] },
       { name: 'All Files', extensions: ['*'] },
-      { name: 'Executables', extensions: ['exe', 'app'] },
     ],
   });
-  const store = new Store();
-  store.set('outputPath', outputPath.filePaths[0]);
-  event.reply('set-browser-path-reply', outputPath.filePaths[0]);
+  if (browserPathResult.filePaths && browserPathResult.filePaths.length > 0) {
+    const store = new Store();
+    const selectedPath = browserPathResult.filePaths[0];
+    store.set('browserPath', selectedPath);
+    event.reply('set-browser-path-reply', selectedPath);
+  }
+});
+
+ipcMain.on('get-browser-path', async (event) => {
+  try {
+    const store = new Store();
+    const savedPath = store.get('browserPath');
+    event.reply('get-browser-path-reply', savedPath || null);
+  } catch (e) {
+    event.reply('get-browser-path-reply', null);
+  }
+});
+
+// IPC to set/get serper.dev API key persisted via electron-store
+ipcMain.on('set-serper-key', async (_event, key) => {
+  try {
+    const store = new Store();
+    store.set('serperKey', key);
+  } catch (e) {
+    // ignore
+  }
+});
+
+ipcMain.on('get-serper-key', async (event) => {
+  try {
+    const store = new Store();
+    const savedKey = store.get('serperKey');
+    const envKey = process.env.SERPERDEV_KEY;
+    const key = (savedKey || envKey || '').toString().trim();
+    if (!savedKey && key) {
+      store.set('serperKey', key);
+    }
+    event.reply('get-serper-key-reply', key || null);
+  } catch (e) {
+    event.reply('get-serper-key-reply', null);
+  }
 });
