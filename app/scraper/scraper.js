@@ -15,7 +15,7 @@ import {
   metaAllRegex,
 } from './regex';
 
-// use full puppeteer so that a Chromium binary is downloaded as a dependency
+// use full puppeteer for launching custom Chrome instances
 const puppeteer = require('puppeteer');
 // const puppeteer = require('puppeteer-extra');
 // const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -50,8 +50,20 @@ export const initBrowser = async () => {
 
   if (browser) await browser.close();
   try {
-    // launch whatever Chromium binary Puppeteer shipped with
+    // Get the user-configured browser path from store
+    const browserPath = store.get('browserPath');
+    
+    if (!browserPath) {
+      throw new Error('Chrome browser path not configured. Please set your Chrome browser path in the application settings.');
+    }
+
+    // Verify the executable exists
+    if (!fs.existsSync(browserPath)) {
+      throw new Error(`Chrome executable not found at: ${browserPath}. Please reconfigure your Chrome browser path.`);
+    }
+
     browser = await puppeteer.launch({
+      executablePath: browserPath,
       headless,
       ignoreHTTPSErrors: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],

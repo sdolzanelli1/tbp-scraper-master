@@ -17,7 +17,7 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { loadTags, loadLocations } from './scraper/parseCSV';
 import { scrapeResults } from './scraper/scraper';
-import { getAssetPath, fetchChrome } from './utils/path';
+import { getAssetPath } from './utils/path';
 
 const { dialog } = require('electron');
 const Store = require('electron-store');
@@ -172,14 +172,10 @@ app.on('activate', () => {
 });
 
 ipcMain.once('init', async (event) => {
-  // Detect Chrome Path
-  const browser = await fetchChrome();
-
   const data = {
     tags: csvData.tags,
     regions: csvData.regions,
     locations: csvData.locations,
-    browser,
   };
   event.reply('init-reply', data);
 });
@@ -212,17 +208,30 @@ ipcMain.on('set-path', async (event) => {
 });
 
 ipcMain.on('set-browser-path', async (event) => {
-  const outputPath = await dialog.showOpenDialog({
+  const browserPathResult = await dialog.showOpenDialog({
     properties: ['openFile'],
     defaultPath: 'c:/',
     filters: [
+      { name: 'Executable Files', extensions: ['exe', 'app'] },
       { name: 'All Files', extensions: ['*'] },
-      { name: 'Executables', extensions: ['exe', 'app'] },
     ],
   });
-  const store = new Store();
-  store.set('outputPath', outputPath.filePaths[0]);
-  event.reply('set-browser-path-reply', outputPath.filePaths[0]);
+  if (browserPathResult.filePaths && browserPathResult.filePaths.length > 0) {
+    const store = new Store();
+    const selectedPath = browserPathResult.filePaths[0];
+    store.set('browserPath', selectedPath);
+    event.reply('set-browser-path-reply', selectedPath);
+  }
+});
+
+ipcMain.on('get-browser-path', async (event) => {
+  try {
+    const store = new Store();
+    const savedPath = store.get('browserPath');
+    event.reply('get-browser-path-reply', savedPath || null);
+  } catch (e) {
+    event.reply('get-browser-path-reply', null);
+  }
 });
 
 // IPC to set/get serper.dev API key persisted via electron-store

@@ -21,7 +21,9 @@ export default function Home(): JSX.Element {
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [serperKey, setSerperKey] = useState('');
+  const [browserPath, setBrowserPath] = useState('');
   const hasSerperKey = serperKey.trim().length > 0;
+  const hasBrowserPath = browserPath.trim().length > 0;
 
   if (tags.length === 0 || regions.length === 0) {
     ipcRenderer.send('init');
@@ -69,10 +71,20 @@ export default function Home(): JSX.Element {
       if(arg) setOutputPath(arg);
     })
 
+    ipcRenderer.on('set-browser-path-reply', (_event, arg) => {
+      if(arg) setBrowserPath(arg);
+    })
+
+    ipcRenderer.on('get-browser-path-reply', (_event, arg) => {
+      if(arg) setBrowserPath(arg);
+    })
 
     ipcRenderer.on('scrape-stop', () => {
       setIsScraping(false);
     })
+
+    // Request browser path on mount
+    ipcRenderer.send('get-browser-path');
 
     ipcRenderer.on('scrape-error', (_event, arg) => {
       setIsScraping(false);
@@ -141,18 +153,18 @@ export default function Home(): JSX.Element {
 
   // check button enabled
   useEffect(() => {
-    if(!currentLocation || outputPath.length === 0){
+    if(!currentLocation || outputPath.length === 0 || !hasBrowserPath){
       setBtnDisabled(true)
     }
 
-    if(currentLocation && outputPath.length > 0){
+    if(currentLocation && outputPath.length > 0 && hasBrowserPath){
       setBtnDisabled(false)
     }
 
-    if(customQuery.length > 0 && outputPath.length > 0){
+    if(customQuery.length > 0 && outputPath.length > 0 && hasBrowserPath){
       setBtnDisabled(false)
     }
-  }, [currentLocation, outputPath, customQuery]);
+  }, [currentLocation, outputPath, customQuery, hasBrowserPath]);
 
   const startScraping = (e) => {
     e.preventDefault();
@@ -170,6 +182,11 @@ export default function Home(): JSX.Element {
     ipcRenderer.send('set-path');
   };
 
+  const onSetBrowserPath = (e) => {
+    e.preventDefault();
+    ipcRenderer.send('set-browser-path');
+  };
+
 
   return (
     <div className="container">
@@ -178,36 +195,55 @@ export default function Home(): JSX.Element {
         <h2 style={{ margin: 0, color: 'white' }}>Colombo</h2>
       </div>
       <div className="mb-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ minWidth: 0 }}>
-          <button type="button" disabled={isScraping} className="btn btn-sm btn-outline mr-3" onClick={(e) => onSetOutputPath(e)}>
-            Choose Destination
-          </button>
-          <span className="file-path">{ outputPath }</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 12 }}>
-          {!hasSerperKey && (
+        <div>
+          {!hasBrowserPath && (
             <span
               style={{
                 display: 'inline-block',
                 marginRight: 8,
                 padding: '3px 8px',
-                border: '1px solid #555',
+                border: '1px solid #f39c12',
                 borderRadius: 4,
-                color: '#555',
+                color: '#f39c12',
                 fontSize: 12,
               }}
             >
-              API key missing
+              Chrome not configured
             </span>
           )}
           <button
             type="button"
+            disabled={isScraping}
+            className="btn btn-sm btn-outline mr-3"
+            onClick={(e) => onSetBrowserPath(e)}
+          >
+            Set Chrome Browser
+          </button>
+          {hasBrowserPath && (
+            <span className="file-path" style={{ fontSize: '11px', color: '#888', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              { browserPath }
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 12 }}>
+          <button
+            type="button"
             className="btn btn-sm"
-            style={{ border: '1px solid #555', color: '#555', background: 'transparent' }}
+            style={{ border: '1px solid #555', color: '#555', background: 'transparent', marginLeft: 'auto' }}
             onClick={(e) => openKeyModal(e)}
           >
             ⚙ Advanced
           </button>
+        </div>
+      </div>
+      <div>
+        <div style={{ minWidth: 0 }}>
+          <button type="button" disabled={isScraping} className="btn btn-sm btn-outline mr-3" onClick={(e) => onSetOutputPath(e)}>
+            Choose Destination
+          </button>
+          <span className="file-path" style={{ fontSize: '11px', color: '#888', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              { outputPath }
+            </span>
         </div>
       </div>
       <hr />
