@@ -15,7 +15,8 @@ import {
   metaAllRegex,
 } from './regex';
 
-const puppeteer = require('puppeteer-core');
+// use full puppeteer so that a Chromium binary is downloaded as a dependency
+const puppeteer = require('puppeteer');
 // const puppeteer = require('puppeteer-extra');
 // const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 // const AdblockerPlugin = require('puppeteer-extra-plugin-adblocker');
@@ -47,17 +48,17 @@ export const initBrowser = async () => {
 
   require('dotenv').config();
 
-  if (browser) browser.close();
+  if (browser) await browser.close();
   try {
-    // TODO: make this dynamic for different OS and setups
-    const chromePath = "C:/Program Files/Google/Chrome/Application/chrome.exe";
+    // launch whatever Chromium binary Puppeteer shipped with
     browser = await puppeteer.launch({
       headless,
-      executablePath: chromePath,
       ignoreHTTPSErrors: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
   } catch (err) {
-    console.error(err);
+    console.error('failed to start browser', err);
+    throw err;
   }
   return browser;
 };

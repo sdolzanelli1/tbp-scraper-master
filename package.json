@@ -259,7 +259,6 @@
     "electron-updater": "^4.3.4",
     "history": "^4.7.2",
     "puppeteer": "^5.4.1",
-    "puppeteer-core": "^5.4.1",
     "puppeteer-extra": "^3.1.15",
     "puppeteer-extra-plugin-adblocker": "^2.11.8",
     "puppeteer-extra-plugin-stealth": "^2.6.5",

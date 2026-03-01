@@ -15,14 +15,13 @@ export const getAssetPath = (paths) => {
 };
 
 export const fetchChrome = async () => {
-  logger(`PLATFORM: ${process.platform}`);
-  let browserPath = '';
-  if (process.platform === 'darwin') {
-    browserPath = '/Applications/Chromium.app/Contents/MacOS/Chromium';
-  } else if (process.platform === 'win32') {
-    browserPath = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-  }
-
+  // prefer Chromium shipped with Puppeteer; this avoids relying on a
+  // locally installed browser and makes the app more self‑contained.
+  // require here to avoid bundling issues in the renderer process
+  // (path util is used in main process only).
+  // eslint-disable-next-line import/no-extraneous-dependencies
+  const puppeteer = require('puppeteer');
+  const browserPath = puppeteer.executablePath();
   const store = new Store();
   store.set('browserPath', browserPath);
   return browserPath;

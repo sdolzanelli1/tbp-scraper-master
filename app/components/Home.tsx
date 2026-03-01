@@ -143,12 +143,6 @@ export default function Home(): JSX.Element {
     <div className="container">
       <h2>Colombo</h2>
       <div className="mb-3">
-        <button type="button" disabled={isScraping} className="btn btn-sm btn-outline mr-3" onClick={(e) => onSetBrowserPath(e)}>
-          Choose Browser Path
-        </button>
-        <span className="file-path">{ browserPath }</span>
-      </div>
-      <div className="mb-3">
         <button type="button" disabled={isScraping} className="btn btn-sm btn-outline mr-3" onClick={(e) => onSetOutputPath(e)}>
           Choose Destination
         </button>
