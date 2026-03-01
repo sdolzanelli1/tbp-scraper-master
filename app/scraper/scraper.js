@@ -39,6 +39,9 @@ export const testURL = (url) => {
 
 export const initBrowser = async () => {
   stopScraping = false;
+
+  require('dotenv').config();
+
   if (browser) browser.close();
   try {
     // TODO: make this dynamic for different OS and setups
