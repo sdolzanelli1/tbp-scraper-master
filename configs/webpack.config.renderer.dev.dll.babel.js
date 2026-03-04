@@ -16,7 +16,7 @@ const dist = path.join(__dirname, '..', 'dll');
 export default merge(baseConfig, {
   context: path.join(__dirname, '..'),
 
-  devtool: 'eval',
+  devtool: 'eval-source-map',
 
   mode: 'development',
 
