@@ -51,10 +51,15 @@ export const initBrowser = async () => {
   if (browser) await browser.close();
   try {
     // Get the user-configured browser path from store
-    const browserPath = store.get('browserPath');
+    let browserPath = store.get('browserPath');
     
     if (!browserPath) {
       throw new Error('Chrome browser path not configured. Please set your Chrome browser path in the application settings.');
+    }
+
+    // If the path ends with .app (macOS app bundle), append the path to the executable
+    if (browserPath.endsWith('.app')) {
+      browserPath += '/Contents/MacOS/Google Chrome';
     }
 
     // Verify the executable exists
