@@ -46,13 +46,17 @@ if (
 }
 
 const installExtensions = async () => {
+  if (process.env.ENABLE_DEVTOOLS_EXTENSIONS !== 'true') {
+    return [];
+  }
+
   const installer = require('electron-devtools-installer');
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
   const extensions = ['REACT_DEVELOPER_TOOLS', 'REDUX_DEVTOOLS'];
 
-  return Promise.all(
+  return Promise.allSettled(
     extensions.map((name) => installer.default(installer[name], forceDownload))
-  ).catch(console.log);
+  );
 };
 
 const createWindow = async () => {
@@ -64,7 +68,7 @@ const createWindow = async () => {
   }
 
   mainWindow = new BrowserWindow({
-    show: false,
+    show: true,
     width: 1200,
     height: 900,
     icon: getAssetPath('icon.png'),
@@ -74,6 +78,7 @@ const createWindow = async () => {
       process.env.ERB_SECURE !== 'true'
         ? {
             nodeIntegration: true,
+            contextIsolation: false,
           }
         : {
             preload: path.join(__dirname, 'dist/renderer.prod.js'),

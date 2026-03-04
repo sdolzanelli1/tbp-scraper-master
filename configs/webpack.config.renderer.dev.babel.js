@@ -51,7 +51,6 @@ export default merge(baseConfig, {
     'core-js',
     'regenerator-runtime/runtime',
     ...(process.env.PLAIN_HMR ? [] : ['react-hot-loader/patch']),
-    `webpack-dev-server/client?http://localhost:${port}/`,
     'webpack/hot/only-dev-server',
     require.resolve('../app/index.tsx'),
   ],
@@ -242,25 +241,21 @@ export default merge(baseConfig, {
 
   devServer: {
     port,
-    publicPath,
     compress: true,
-    noInfo: false,
-    stats: 'errors-only',
-    inline: true,
-    lazy: false,
     hot: true,
     headers: { 'Access-Control-Allow-Origin': '*' },
-    contentBase: path.join(__dirname, 'dist'),
-    watchOptions: {
-      aggregateTimeout: 300,
-      ignored: /node_modules/,
-      poll: 100,
+    static: {
+      directory: path.join(__dirname, 'dist'),
+    },
+    devMiddleware: {
+      publicPath,
+      stats: 'errors-only',
     },
     historyApiFallback: {
       verbose: true,
       disableDotRule: false,
     },
-    before() {
+    onBeforeSetupMiddleware() {
       if (process.env.START_HOT) {
         console.log('Starting Main Process...');
         spawn('npm', ['run', 'start-main-dev'], {

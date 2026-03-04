@@ -1,6 +1,6 @@
-import chalk from 'chalk';
+const chalk = require('chalk');
 
-export default function CheckNodeEnv(expectedEnv) {
+function CheckNodeEnv(expectedEnv) {
   if (!expectedEnv) {
     throw new Error('"expectedEnv" not set');
   }
@@ -14,3 +14,5 @@ export default function CheckNodeEnv(expectedEnv) {
     process.exit(2);
   }
 }
+
+module.exports = CheckNodeEnv;

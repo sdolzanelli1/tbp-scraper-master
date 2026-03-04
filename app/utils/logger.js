@@ -1,4 +1,4 @@
-import { getMainWindow } from 'electron-main-window';
+import { BrowserWindow } from 'electron';
 import log from 'electron-log';
 
 const dateFormat = require('dateformat');
@@ -14,7 +14,7 @@ export const logger = (message) => {
   
   // Try to send to renderer, but don't fail if window isn't ready
   try {
-    const mainWindow = getMainWindow();
+    const [mainWindow] = BrowserWindow.getAllWindows();
     if (mainWindow && mainWindow.webContents) {
       mainWindow.webContents.send('logger', { message: logMessage });
     }
