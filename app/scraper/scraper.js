@@ -62,6 +62,8 @@ export const initBrowser = async () => {
       throw new Error(`Chrome executable not found at: ${browserPath}. Please reconfigure your Chrome browser path.`);
     }
 
+    logger(`Launching browser from path: ${browserPath} with headless mode: ${headless}`);
+
     browser = await puppeteer.launch({
       executablePath: browserPath,
       headless,
