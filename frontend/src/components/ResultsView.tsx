@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { RefreshCw, ChevronRight, ChevronDown, ExternalLink, Download } from 'lucide-react'
 
 interface Run {
@@ -96,18 +96,44 @@ const RunRow: React.FC<{ run: Run; isActive: boolean; onSelect: () => void }> = 
   </button>
 )
 
-const ResultsTable: React.FC<{ runId: number; refreshSignal: number }> = ({ runId, refreshSignal }) => {
+const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal: number }> = ({ runId, isRunning, refreshSignal }) => {
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(true)
+  const lastIdRef = useRef(0)
+  const newFromIdRef = useRef<number | null>(null)
 
+  // Full reload on run change or manual refresh
   useEffect(() => {
     setLoading(true)
+    lastIdRef.current = 0
+    newFromIdRef.current = null
     fetch(`/api/scrape/runs/${runId}/results`)
       .then((r) => r.json())
-      .then((data: Result[]) => setResults(data))
+      .then((data: Result[]) => {
+        setResults(data)
+        if (data.length > 0) lastIdRef.current = data[0].id
+      })
       .catch(() => setResults([]))
       .finally(() => setLoading(false))
   }, [runId, refreshSignal])
+
+  // Seamlessly append new rows every 5s while the run is in progress
+  useEffect(() => {
+    if (!isRunning) return
+    const id = setInterval(() => {
+      fetch(`/api/scrape/runs/${runId}/results?after=${lastIdRef.current}`)
+        .then((r) => r.json())
+        .then((data: Result[]) => {
+          if (data.length > 0) {
+            newFromIdRef.current = data[data.length - 1].id
+            setResults((prev) => [...data, ...prev])
+            lastIdRef.current = data[0].id
+          }
+        })
+        .catch(() => {})
+    }, 5000)
+    return () => clearInterval(id)
+  }, [runId, isRunning])
 
   if (loading) {
     return (
@@ -138,7 +164,12 @@ const ResultsTable: React.FC<{ runId: number; refreshSignal: number }> = ({ runI
         </thead>
         <tbody>
           {results.map((r) => (
-            <tr key={r.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/20 transition-colors">
+            <tr
+              key={r.id}
+              className={`border-b border-zinc-800/50 hover:bg-zinc-800/20 transition-colors${
+                newFromIdRef.current !== null && r.id >= newFromIdRef.current ? ' animate-row-in' : ''
+              }`}
+            >
               {RESULT_COLS.map((col) => (
                 <td key={col.key} className="px-3 py-2 align-top">
                   <Cell value={r[col.key] as string | null} isUrl={col.key === 'url'} />
@@ -161,6 +192,9 @@ export const ResultsView: React.FC = () => {
   const [loadingRuns, setLoadingRuns] = useState(true)
   const [refreshSignal, setRefreshSignal] = useState(0)
 
+  const selectedRun = runs.find((r) => r.id === selectedRunId) ?? null
+  const isSelectedRunning = selectedRun ? !selectedRun.end_time : false
+
   const loadRuns = useCallback(() => {
     setLoadingRuns(true)
     fetch('/api/scrape/runs')
@@ -175,9 +209,23 @@ export const ResultsView: React.FC = () => {
       .finally(() => setLoadingRuns(false))
   }, [selectedRunId])
 
+  // Silently refresh the runs sidebar every 5s while the selected run is in progress
+  const refreshRunsSilent = useCallback(() => {
+    fetch('/api/scrape/runs')
+      .then((r) => r.json())
+      .then((data: Run[]) => setRuns(data))
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     loadRuns()
   }, [])
+
+  useEffect(() => {
+    if (!isSelectedRunning) return
+    const id = setInterval(refreshRunsSilent, 5000)
+    return () => clearInterval(id)
+  }, [isSelectedRunning, refreshRunsSilent])
 
   const handleRefresh = () => {
     loadRuns()
@@ -244,7 +292,7 @@ export const ResultsView: React.FC = () => {
                   </a>
                 </div>
                 <div className="flex-1 overflow-auto min-w-0">
-                  <ResultsTable runId={selectedRunId} refreshSignal={refreshSignal} />
+                  <ResultsTable runId={selectedRunId} isRunning={isSelectedRunning} refreshSignal={refreshSignal} />
                 </div>
               </>
             )}

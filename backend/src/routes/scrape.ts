@@ -143,7 +143,10 @@ scrapeRouter.get('/runs/:id/results', (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid run id' })
     return
   }
-  const results = db.prepare('SELECT * FROM results WHERE run_id = ? ORDER BY id ASC').all(runId)
+  const after = Number(req.query.after ?? 0)
+  const results = after
+    ? db.prepare('SELECT * FROM results WHERE run_id = ? AND id > ? ORDER BY id DESC').all(runId, after)
+    : db.prepare('SELECT * FROM results WHERE run_id = ? ORDER BY id DESC').all(runId)
   res.json(results)
 })
 
