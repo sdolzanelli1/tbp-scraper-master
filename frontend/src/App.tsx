@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Header } from './components/Header'
 import { ConfigBar } from './components/ConfigBar'
 import { ScraperForm } from './components/ScraperForm'
@@ -16,22 +16,18 @@ function App() {
   const handleSerperKeyChange = (key: string) => {
     setSerperKey(key)
     localStorage.setItem('serperKey', key)
-    setSerperKeyStatus(key.trim() ? 'checking' : 'idle')
-  }
-
-  useEffect(() => {
-    if (!serperKey.trim()) {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!key.trim()) {
       setSerperKeyStatus('idle')
       return
     }
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setSerperKeyStatus('checking')
     debounceRef.current = setTimeout(async () => {
-      setSerperKeyStatus('checking')
       try {
         const res = await fetch('/api/scrape/validate-key', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ serperKey }),
+          body: JSON.stringify({ serperKey: key }),
         })
         const data = await res.json()
         setSerperKeyStatus(data.valid ? 'valid' : 'invalid')
@@ -39,8 +35,7 @@ function App() {
         setSerperKeyStatus('invalid')
       }
     }, 600)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [serperKey])
+  }
 
   return (
     <div
