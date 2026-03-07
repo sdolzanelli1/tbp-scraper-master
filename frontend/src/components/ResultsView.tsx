@@ -122,7 +122,7 @@ const ResultsTable: React.FC<{ runId: number; refreshSignal: number }> = ({ runI
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div>
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr className="bg-zinc-900/80">
@@ -243,7 +243,7 @@ export const ResultsView: React.FC = () => {
                     Export CSV
                   </a>
                 </div>
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto min-w-0">
                   <ResultsTable runId={selectedRunId} refreshSignal={refreshSignal} />
                 </div>
               </>
