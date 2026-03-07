@@ -1,5 +1,6 @@
 import React from 'react'
 import { LogOut } from 'lucide-react'
+import tbpLogo from '../assets/tbp.png'
 
 interface HeaderProps {
   running: boolean
@@ -13,14 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ running, onLogout }) => {
       style={{ background: 'linear-gradient(135deg, #2d1509 0%, #1e1e1e 60%)' }}
     >
       {/* TBP Logo mark */}
-      <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <rect x="2" y="2" width="7" height="7" rx="1.5" fill="#c9a84c" />
-          <rect x="11" y="2" width="7" height="7" rx="1.5" fill="#c9a84c" opacity="0.6" />
-          <rect x="2" y="11" width="7" height="7" rx="1.5" fill="#c9a84c" opacity="0.6" />
-          <rect x="11" y="11" width="7" height="7" rx="1.5" fill="#c9a84c" opacity="0.3" />
-        </svg>
-      </div>
+      <img src={tbpLogo} alt="TBP Logo" className="w-9 h-9 object-contain" />
 
       {/* Title */}
       <div>
