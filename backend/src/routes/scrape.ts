@@ -5,6 +5,7 @@ import path from 'path'
 import { scrapeResults, stopScrape, validateSerperKey } from '../scripts/scraper/scraper.js'
 import { loadTags, loadLocations } from '../scripts/scraper/parseCSV.js'
 import db from '../scripts/scraper/db.js'
+import { getCSV } from '../scripts/scraper/writeCSV.js'
 
 export const scrapeRouter = express.Router()
 
@@ -140,4 +141,21 @@ scrapeRouter.get('/runs/:id/results', (req: Request, res: Response) => {
   }
   const results = db.prepare('SELECT * FROM results WHERE run_id = ? ORDER BY id ASC').all(runId)
   res.json(results)
+})
+
+/**
+ * GET /api/scrape/runs/:id/export
+ * Download results for a run as a semicolon-delimited CSV file.
+ */
+scrapeRouter.get('/runs/:id/export', (req: Request, res: Response) => {
+  const runId = Number(req.params.id)
+  if (!Number.isInteger(runId)) {
+    res.status(400).json({ error: 'Invalid run id' })
+    return
+  }
+  const results = db.prepare('SELECT * FROM results WHERE run_id = ? ORDER BY id ASC').all(runId)
+  const csv = getCSV(results)
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="run_${runId}_results.csv"`)
+  res.send(csv)
 })

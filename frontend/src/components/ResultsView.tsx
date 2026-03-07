@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, ChevronRight, ChevronDown, ExternalLink } from 'lucide-react'
+import { RefreshCw, ChevronRight, ChevronDown, ExternalLink, Download } from 'lucide-react'
 
 interface Run {
   id: number
@@ -225,13 +225,28 @@ export const ResultsView: React.FC = () => {
           </div>
 
           {/* Results panel */}
-          <div className="flex-1 overflow-auto" style={{ maxHeight: 600 }}>
+          <div className="flex-1 overflow-auto flex flex-col" style={{ maxHeight: 600 }}>
             {selectedRunId === null ? (
               <div className="flex items-center justify-center h-full text-xs text-zinc-600">
                 Select a run to view results
               </div>
             ) : (
-              <ResultsTable runId={selectedRunId} refreshSignal={refreshSignal} />
+              <>
+                {/* Export bar */}
+                <div className="flex items-center justify-end px-4 py-2 border-b border-zinc-800/60 shrink-0">
+                  <a
+                    href={`/api/scrape/runs/${selectedRunId}/export`}
+                    download
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors px-2 py-1 rounded-md hover:bg-zinc-800/60"
+                  >
+                    <Download size={12} />
+                    Export CSV
+                  </a>
+                </div>
+                <div className="flex-1 overflow-auto">
+                  <ResultsTable runId={selectedRunId} refreshSignal={refreshSignal} />
+                </div>
+              </>
             )}
           </div>
         </div>
