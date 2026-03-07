@@ -46,6 +46,20 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
       .catch(() => setError('Could not reach backend — is it running?'))
   }, [])
 
+  // Sync running state with backend on mount (restores state after tab refresh)
+  useEffect(() => {
+    fetch('/api/scrape/status')
+      .then((r) => r.json())
+      .then(({ status }: { status: string }) => {
+        if (status === 'running') {
+          setRunning(true)
+          onRunningChange(true)
+        }
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Poll status while running
   useEffect(() => {
     if (!running) return

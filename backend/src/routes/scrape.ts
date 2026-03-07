@@ -31,6 +31,10 @@ async function loadCsvData() {
 
 loadCsvData()
 
+// ── Cleanup: finalize any runs left unfinished by a previous server crash ───
+db.prepare('UPDATE scraping_runs SET end_time = ? WHERE end_time IS NULL')
+  .run(new Date().toISOString())
+
 // ── In-progress job state ────────────────────────────────
 let jobRunning = false
 
