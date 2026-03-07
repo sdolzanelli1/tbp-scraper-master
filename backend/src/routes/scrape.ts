@@ -44,6 +44,7 @@ export interface ScrapePayload {
   startingTag?: string
   customQuery?: string
   serperKey?: string
+  name?: string
 }
 
 /**
@@ -66,7 +67,7 @@ scrapeRouter.post('/validate-key', async (req: Request, res: Response) => {
  * Kick off a scrape job.
  */
 scrapeRouter.post('/', async (req: Request, res: Response) => {
-  const { region, city, startingTag, customQuery, serperKey } = req.body as ScrapePayload
+  const { region, city, startingTag, customQuery, serperKey, name } = req.body as ScrapePayload
 
   if (!region || !city) {
     res.status(400).json({ error: 'region and city are required' })
@@ -86,9 +87,10 @@ scrapeRouter.post('/', async (req: Request, res: Response) => {
 
   const config = {
     serperKey: serperKey || process.env.SERPERDEV_KEY,
+    name: name?.trim() || undefined,
   }
 
-  console.log('[scrape] Starting job', { region, city, startingTag, customQuery })
+  console.log('[scrape] Starting job', { region, city, startingTag, customQuery, name: config.name })
 
   jobRunning = true
   // Run in the background so the response is returned immediately
@@ -96,7 +98,7 @@ scrapeRouter.post('/', async (req: Request, res: Response) => {
     .catch((err: Error) => console.error('[scrape] Job failed:', err.message))
     .finally(() => { jobRunning = false })
 
-  res.json({ status: 'started', job: { region, city, startingTag, customQuery } })
+  res.json({ status: 'started', job: { region, city, startingTag, customQuery, name: config.name } })
 })
 
 /**

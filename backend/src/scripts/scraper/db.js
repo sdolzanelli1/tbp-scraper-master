@@ -10,6 +10,7 @@ const db = new Database(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS scraping_runs (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT,
     start_time  TEXT NOT NULL,
     end_time    TEXT
   );
@@ -31,8 +32,17 @@ db.exec(`
   );
 `);
 
-export const createRun = () => {
-  const result = db.prepare('INSERT INTO scraping_runs (start_time) VALUES (?)').run(new Date().toISOString());
+// Migrate existing databases that predate the name column
+try {
+  db.exec('ALTER TABLE scraping_runs ADD COLUMN name TEXT');
+} catch (_) {
+  // column already exists — safe to ignore
+}
+
+export const createRun = (name) => {
+  const result = db
+    .prepare('INSERT INTO scraping_runs (name, start_time) VALUES (?, ?)')
+    .run(name ?? null, new Date().toISOString());
   return result.lastInsertRowid;
 };
 

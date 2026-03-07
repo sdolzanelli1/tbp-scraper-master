@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Globe2, MapPin, Tag, Search, Play, Square, RotateCcw } from 'lucide-react'
+import { Globe2, MapPin, Tag, Search, Play, Square, RotateCcw, Pencil } from 'lucide-react'
 import { Button } from './ui/Button'
 
 interface ScraperData {
@@ -9,6 +9,7 @@ interface ScraperData {
 }
 
 interface FormState {
+  name: string
   region: string
   city: string
   startingTag: string
@@ -16,6 +17,7 @@ interface FormState {
 }
 
 const defaultForm: FormState = {
+  name: '',
   region: '',
   city: '',
   startingTag: '',
@@ -106,6 +108,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
           city: form.city,
           startingTag: form.startingTag,
           customQuery: form.customQuery,
+          name: form.name.trim() || undefined,
           serperKey,
         }),
       })
@@ -141,6 +144,21 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
 
       {/* Grid form */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Run name */}
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-zinc-500">
+            <Pencil size={11} className="text-zinc-600" />
+            Run Name <span className="normal-case font-normal text-zinc-700">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="e.g. Pianista Iseo batch 1"
+            className="w-full rounded-lg px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder:text-zinc-700 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-600"
+          />
+        </div>
+
         {/* Region */}
         <div className="flex flex-col gap-1.5">
           <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-zinc-500">

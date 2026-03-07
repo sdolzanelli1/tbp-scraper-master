@@ -239,6 +239,7 @@ export const scrapeLinks = async (query, apiKey) => {
 
 export const scrapeResults = async (query, tags, config = {}) => {
   const serperKey = config.serperKey || process.env.SERPERDEV_KEY || '';
+  const runName = config.name || null;
 
   await initBrowser();
 
@@ -259,8 +260,8 @@ export const scrapeResults = async (query, tags, config = {}) => {
 
   logger('Serper.dev API key validated successfully');
 
-  currentRunId = createRun();
-  logger(`DB: created scraping run #${currentRunId}`);
+  currentRunId = createRun(runName);
+  logger(`DB: created scraping run #${currentRunId}${runName ? ` (${runName})` : ''}`);
 
   let links = [];
 

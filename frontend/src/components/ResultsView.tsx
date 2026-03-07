@@ -3,6 +3,7 @@ import { RefreshCw, ChevronRight, ChevronDown, ExternalLink, Download } from 'lu
 
 interface Run {
   id: number
+  name: string | null
   start_time: string
   end_time: string | null
 }
@@ -82,8 +83,11 @@ const RunRow: React.FC<{ run: Run; isActive: boolean; onSelect: () => void }> = 
       <ChevronRight size={14} className="shrink-0 text-zinc-600" />
     )}
     <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-mono text-zinc-400">#{run.id}</span>
+        {run.name && (
+          <span className="text-xs font-medium text-zinc-300 truncate">{run.name}</span>
+        )}
         {!run.end_time && (
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-800/60 text-emerald-400">
             running
