@@ -1,0 +1,15 @@
+{
+  "name": "new-tbp-scraper",
+  "version": "1.0.0",
+  "description": "Colombo — ToBePolo Scraper",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c green,cyan \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
