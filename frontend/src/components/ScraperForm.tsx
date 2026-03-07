@@ -155,7 +155,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="e.g. Pianista Iseo batch 1"
-            className="w-full rounded-lg px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder:text-zinc-700 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-600"
+            className="w-full rounded-lg px-3 py-2.5 text-sm bg-zinc-800 border border-zinc-700 text-zinc-200 placeholder:text-zinc-600 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-500"
           />
         </div>
 
@@ -169,7 +169,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
             <select
               value={form.region}
               onChange={(e) => handleRegionChange(e.target.value)}
-              className="w-full appearance-none rounded-lg px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-600 cursor-pointer"
+              className="w-full appearance-none rounded-lg px-3 py-2.5 text-sm bg-zinc-800 border border-zinc-700 text-zinc-200 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-500 cursor-pointer"
             >
               <option value="" disabled>Select region…</option>
               {data.regions.map((r) => (
@@ -192,10 +192,10 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
               onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
               disabled={!form.region || cities.length === 0}
               className={[
-                'w-full appearance-none rounded-lg px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30',
+                'w-full appearance-none rounded-lg px-3 py-2.5 text-sm bg-zinc-800 border border-zinc-700 text-zinc-200 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30',
                 (!form.region || cities.length === 0)
                   ? 'opacity-40 cursor-not-allowed'
-                  : 'hover:border-zinc-600 cursor-pointer',
+                  : 'hover:border-zinc-500 cursor-pointer',
               ].join(' ')}
             >
               <option value="" disabled>
@@ -220,7 +220,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
               value={form.startingTag}
               onChange={(e) => setForm((f) => ({ ...f, startingTag: e.target.value }))}
               disabled={data.tags.length === 0}
-              className="w-full appearance-none rounded-lg px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full appearance-none rounded-lg px-3 py-2.5 text-sm bg-zinc-800 border border-zinc-700 text-zinc-200 transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-500 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {data.tags.length === 0 && <option value="">Loading…</option>}
               {data.tags.map((t) => (
@@ -243,12 +243,12 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
           onChange={(e) => setForm((f) => ({ ...f, customQuery: e.target.value }))}
           placeholder="Enter a custom search query…"
           rows={3}
-          className="w-full rounded-lg px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder:text-zinc-700 resize-y transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-600"
+          className="w-full rounded-lg px-3 py-2.5 text-sm bg-zinc-800 border border-zinc-700 text-zinc-200 placeholder:text-zinc-600 resize-y transition-all duration-150 focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/30 hover:border-zinc-500"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 pt-2 border-t border-zinc-800/60">
+      <div className="flex items-center gap-3 pt-2 border-t border-zinc-700/60">
         {running ? (
           <Button
             variant="primary"

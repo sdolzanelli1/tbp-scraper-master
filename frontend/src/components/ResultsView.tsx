@@ -73,8 +73,8 @@ const Cell: React.FC<{ value: string | null; isUrl?: boolean }> = ({ value, isUr
 const RunRow: React.FC<{ run: Run; isActive: boolean; onSelect: () => void }> = ({ run, isActive, onSelect }) => (
   <button
     onClick={onSelect}
-    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-zinc-800/60 hover:bg-zinc-800/40 ${
-      isActive ? 'bg-zinc-800/60' : ''
+    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-zinc-700/60 hover:bg-zinc-700/40 ${
+      isActive ? 'bg-zinc-700/60' : ''
     }`}
   >
     {isActive ? (
@@ -155,11 +155,11 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
     <div>
       <table className="w-full text-xs border-collapse">
         <thead>
-          <tr className="bg-zinc-900/80">
+          <tr className="bg-zinc-800/80">
             {RESULT_COLS.map((col) => (
               <th
                 key={col.key}
-                className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-800 whitespace-nowrap"
+                className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-zinc-500 border-b border-zinc-700 whitespace-nowrap"
               >
                 {col.label}
               </th>
@@ -170,7 +170,7 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
           {results.map((r) => (
             <tr
               key={r.id}
-              className={`border-b border-zinc-800/50 hover:bg-zinc-800/20 transition-colors${
+              className={`border-b border-zinc-700/50 hover:bg-zinc-700/20 transition-colors${
                 newFromIdRef.current !== null && r.id >= newFromIdRef.current ? ' animate-row-in' : ''
               }`}
             >
@@ -183,7 +183,7 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
           ))}
         </tbody>
       </table>
-      <div className="px-4 py-2 text-[11px] text-zinc-600 border-t border-zinc-800/60">
+      <div className="px-4 py-2 text-[11px] text-zinc-600 border-t border-zinc-700/60">
         {results.length} result{results.length !== 1 ? 's' : ''}
       </div>
     </div>
@@ -239,18 +239,18 @@ export const ResultsView: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:px-6">
       <div
-        className="rounded-xl border border-zinc-800/80 overflow-hidden"
-        style={{ background: '#141414' }}
+        className="rounded-xl border border-zinc-700/80 overflow-hidden"
+        style={{ background: '#1e1e1e' }}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-800/60 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-zinc-700/60 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold text-zinc-100">Scraping Runs</h2>
             <p className="text-xs text-zinc-600 mt-0.5">Browse past runs and their results</p>
           </div>
           <button
             onClick={handleRefresh}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-zinc-800/60"
+            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-zinc-700/60"
           >
             <RefreshCw size={12} />
             Refresh
@@ -259,7 +259,7 @@ export const ResultsView: React.FC = () => {
 
         <div className="flex min-h-[400px]" style={{ minHeight: 400 }}>
           {/* Runs sidebar */}
-          <div className="w-64 shrink-0 border-r border-zinc-800/60 overflow-y-auto" style={{ maxHeight: 600 }}>
+          <div className="w-64 shrink-0 border-r border-zinc-700/60 overflow-y-auto" style={{ maxHeight: 600 }}>
             {loadingRuns ? (
               <div className="px-4 py-8 text-center text-xs text-zinc-600">Loading…</div>
             ) : runs.length === 0 ? (
@@ -285,11 +285,11 @@ export const ResultsView: React.FC = () => {
             ) : (
               <>
                 {/* Export bar */}
-                <div className="flex items-center justify-end px-4 py-2 border-b border-zinc-800/60 shrink-0">
+                <div className="flex items-center justify-end px-4 py-2 border-b border-zinc-700/60 shrink-0">
                   <a
                     href={`/api/scrape/runs/${selectedRunId}/export`}
                     download
-                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors px-2 py-1 rounded-md hover:bg-zinc-800/60"
+                    className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors px-2 py-1 rounded-md hover:bg-zinc-700/60"
                   >
                     <Download size={12} />
                     Export CSV

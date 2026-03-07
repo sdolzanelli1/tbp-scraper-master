@@ -7,8 +7,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ running }) => {
   return (
     <header
-      className="flex items-center gap-4 px-6 py-4 border-b border-zinc-800/80"
-      style={{ background: 'linear-gradient(135deg, #1a0a06 0%, #0f0f0f 60%)' }}
+      className="flex items-center gap-4 px-6 py-4 border-b border-zinc-700/80"
+      style={{ background: 'linear-gradient(135deg, #2d1509 0%, #1e1e1e 60%)' }}
     >
       {/* TBP Logo mark */}
       <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20">
@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ running }) => {
             Running
           </span>
         ) : (
-          <span className="flex items-center gap-1.5 text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 rounded-full px-3 py-1">
+          <span className="flex items-center gap-1.5 text-xs text-zinc-500 bg-zinc-800 border border-zinc-700 rounded-full px-3 py-1">
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
             Idle
           </span>

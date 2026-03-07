@@ -40,7 +40,7 @@ function App() {
   return (
     <div
       className="flex flex-col min-h-screen"
-      style={{ background: '#0d0d0d' }}
+      style={{ background: '#161616' }}
     >
       <Header running={running} />
 
@@ -52,15 +52,15 @@ function App() {
       />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 px-6 pt-4 border-b border-zinc-800/60">
+      <div className="flex items-center gap-1 px-6 pt-4 border-b border-zinc-700/60">
         {(['scraper', 'results'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 text-xs font-semibold capitalize rounded-t-md transition-colors border-b-2 -mb-px ${
               tab === t
-                ? 'text-amber-400 border-amber-400 bg-zinc-900/40'
-                : 'text-zinc-500 border-transparent hover:text-zinc-300 hover:bg-zinc-800/30'
+                ? 'text-amber-400 border-amber-400 bg-zinc-800/40'
+                : 'text-zinc-500 border-transparent hover:text-zinc-300 hover:bg-zinc-700/30'
             }`}
           >
             {t === 'scraper' ? 'Scraper' : 'Results'}
@@ -74,11 +74,11 @@ function App() {
         <div className="w-full max-w-xl">
           {/* Card */}
           <div
-            className="rounded-xl border border-zinc-800/80 overflow-hidden"
-            style={{ background: '#141414' }}
+            className="rounded-xl border border-zinc-700/80 overflow-hidden"
+            style={{ background: '#1e1e1e' }}
           >
             {/* Card header */}
-            <div className="px-6 py-4 border-b border-zinc-800/60 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-zinc-700/60 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-zinc-100">
                   Scraper Configuration

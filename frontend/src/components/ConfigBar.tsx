@@ -16,7 +16,7 @@ export const ConfigBar: React.FC<ConfigBarProps> = ({
   onAdvanced,
 }) => {
   return (
-    <div className="flex flex-wrap items-center gap-3 px-6 py-3 bg-zinc-950/60 border-b border-zinc-800/60 backdrop-blur-sm">
+    <div className="flex flex-wrap items-center gap-3 px-6 py-3 bg-zinc-900/60 border-b border-zinc-700/60 backdrop-blur-sm">
       {/* Serper API key */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <span className="flex items-center gap-1.5 text-xs text-zinc-500 shrink-0">
@@ -29,12 +29,12 @@ export const ConfigBar: React.FC<ConfigBarProps> = ({
             value={serperKey}
             onChange={(e) => onSerperKeyChange(e.target.value)}
             placeholder="Enter Serper.dev API key…"
-            className={`w-full rounded-md pl-2.5 pr-7 py-1 text-xs bg-zinc-900 border text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:ring-1 font-mono transition-colors ${
+            className={`w-full rounded-md pl-2.5 pr-7 py-1 text-xs bg-zinc-800 border text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-1 font-mono transition-colors ${
               serperKeyStatus === 'valid'
                 ? 'border-emerald-500/60 focus:border-emerald-500/70 focus:ring-emerald-500/20'
                 : serperKeyStatus === 'invalid'
                 ? 'border-red-500/60 focus:border-red-500/70 focus:ring-red-500/20'
-                : 'border-zinc-800 focus:border-amber-500/50 focus:ring-amber-500/20'
+                : 'border-zinc-700 focus:border-amber-500/50 focus:ring-amber-500/20'
             }`}
           />
           {serperKeyStatus === 'checking' && (
@@ -50,7 +50,7 @@ export const ConfigBar: React.FC<ConfigBarProps> = ({
       </div>
 
       {/* Divider */}
-      <div className="hidden sm:block w-px h-5 bg-zinc-800" />
+      <div className="hidden sm:block w-px h-5 bg-zinc-700" />
 
       {/* Advanced */}
       <Button
