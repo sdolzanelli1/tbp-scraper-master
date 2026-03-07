@@ -1,10 +1,11 @@
 import React from 'react'
-import { FolderOpen, SlidersHorizontal, Key } from 'lucide-react'
+import { FolderOpen, SlidersHorizontal, Key, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { Button } from './ui/Button'
 
 interface ConfigBarProps {
   destination: string
   serperKey: string
+  serperKeyStatus?: 'idle' | 'checking' | 'valid' | 'invalid'
   onSerperKeyChange: (key: string) => void
   onSetDestination: () => void
   onAdvanced: () => void
@@ -13,6 +14,7 @@ interface ConfigBarProps {
 export const ConfigBar: React.FC<ConfigBarProps> = ({
   destination,
   serperKey,
+  serperKeyStatus = 'idle',
   onSerperKeyChange,
   onSetDestination,
   onAdvanced,
@@ -25,13 +27,30 @@ export const ConfigBar: React.FC<ConfigBarProps> = ({
           <Key size={12} />
           Serper Key
         </span>
-        <input
-          type="password"
-          value={serperKey}
-          onChange={(e) => onSerperKeyChange(e.target.value)}
-          placeholder="Enter Serper.dev API key…"
-          className="flex-1 min-w-0 rounded-md px-2.5 py-1 text-xs bg-zinc-900 border border-zinc-800 text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 font-mono"
-        />
+        <div className="relative flex-1 min-w-0">
+          <input
+            type="password"
+            value={serperKey}
+            onChange={(e) => onSerperKeyChange(e.target.value)}
+            placeholder="Enter Serper.dev API key…"
+            className={`w-full rounded-md pl-2.5 pr-7 py-1 text-xs bg-zinc-900 border text-zinc-300 placeholder:text-zinc-700 focus:outline-none focus:ring-1 font-mono transition-colors ${
+              serperKeyStatus === 'valid'
+                ? 'border-emerald-500/60 focus:border-emerald-500/70 focus:ring-emerald-500/20'
+                : serperKeyStatus === 'invalid'
+                ? 'border-red-500/60 focus:border-red-500/70 focus:ring-red-500/20'
+                : 'border-zinc-800 focus:border-amber-500/50 focus:ring-amber-500/20'
+            }`}
+          />
+          {serperKeyStatus === 'checking' && (
+            <Loader2 size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 animate-spin" />
+          )}
+          {serperKeyStatus === 'valid' && (
+            <CheckCircle2 size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-500" />
+          )}
+          {serperKeyStatus === 'invalid' && (
+            <XCircle size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500" />
+          )}
+        </div>
       </div>
 
       {/* Divider */}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Header } from './components/Header'
 import { ConfigBar } from './components/ConfigBar'
 import { ScraperForm } from './components/ScraperForm'
@@ -6,12 +6,38 @@ import { ScraperForm } from './components/ScraperForm'
 function App() {
   const [destination, setDestination] = useState('')
   const [serperKey, setSerperKey] = useState(() => localStorage.getItem('serperKey') ?? '')
+  const [serperKeyStatus, setSerperKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle')
   const [running, setRunning] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleSerperKeyChange = (key: string) => {
     setSerperKey(key)
     localStorage.setItem('serperKey', key)
+    setSerperKeyStatus(key.trim() ? 'checking' : 'idle')
   }
+
+  useEffect(() => {
+    if (!serperKey.trim()) {
+      setSerperKeyStatus('idle')
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setSerperKeyStatus('checking')
+      try {
+        const res = await fetch('/api/scrape/validate-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ serperKey }),
+        })
+        const data = await res.json()
+        setSerperKeyStatus(data.valid ? 'valid' : 'invalid')
+      } catch {
+        setSerperKeyStatus('invalid')
+      }
+    }, 600)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [serperKey])
 
   return (
     <div
@@ -23,6 +49,7 @@ function App() {
       <ConfigBar
         destination={destination}
         serperKey={serperKey}
+        serperKeyStatus={serperKeyStatus}
         onSerperKeyChange={handleSerperKeyChange}
         onSetDestination={() => {
           const dest = window.prompt('Output destination folder', destination)

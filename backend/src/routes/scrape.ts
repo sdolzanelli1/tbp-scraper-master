@@ -2,7 +2,7 @@ import express from 'express'
 import type { Request, Response } from 'express'
 import { fileURLToPath } from 'url'
 import path from 'path'
-import { scrapeResults, stopScrape } from '../scripts/scraper/scraper.js'
+import { scrapeResults, stopScrape, validateSerperKey } from '../scripts/scraper/scraper.js'
 import { loadTags, loadLocations } from '../scripts/scraper/parseCSV.js'
 
 export const scrapeRouter = express.Router()
@@ -40,6 +40,21 @@ export interface ScrapePayload {
   serperKey?: string
   outputPath?: string
 }
+
+/**
+ * POST /api/validate-key
+ * Validate a Serper.dev API key without running a full scrape.
+ */
+scrapeRouter.post('/validate-key', async (req: Request, res: Response) => {
+  const { serperKey } = req.body as { serperKey?: string }
+  const key = (serperKey || process.env.SERPERDEV_KEY || '').trim()
+  if (!key) {
+    res.status(400).json({ valid: false, message: 'No API key provided' })
+    return
+  }
+  const result = await validateSerperKey(key)
+  res.status(result.valid ? 200 : 400).json(result)
+})
 
 /**
  * POST /api/scrape
