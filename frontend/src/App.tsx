@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { Header } from './components/Header'
 import { ConfigBar } from './components/ConfigBar'
 import { ScraperForm } from './components/ScraperForm'
+import { ResultsView } from './components/ResultsView'
+
+type Tab = 'scraper' | 'results'
 
 function App() {
-  const [destination, setDestination] = useState('')
+  const [tab, setTab] = useState<Tab>('scraper')
   const [serperKey, setSerperKey] = useState(() => localStorage.getItem('serperKey') ?? '')
   const [serperKeyStatus, setSerperKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle')
   const [running, setRunning] = useState(false)
@@ -47,19 +50,32 @@ function App() {
       <Header running={running} />
 
       <ConfigBar
-        destination={destination}
         serperKey={serperKey}
         serperKeyStatus={serperKeyStatus}
         onSerperKeyChange={handleSerperKeyChange}
-        onSetDestination={() => {
-          const dest = window.prompt('Output destination folder', destination)
-          if (dest !== null) setDestination(dest)
-        }}
         onAdvanced={() => alert('Advanced settings — coming soon')}
       />
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 px-6 pt-4 border-b border-zinc-800/60">
+        {(['scraper', 'results'] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 text-xs font-semibold capitalize rounded-t-md transition-colors border-b-2 -mb-px ${
+              tab === t
+                ? 'text-amber-400 border-amber-400 bg-zinc-900/40'
+                : 'text-zinc-500 border-transparent hover:text-zinc-300 hover:bg-zinc-800/30'
+            }`}
+          >
+            {t === 'scraper' ? 'Scraper' : 'Results'}
+          </button>
+        ))}
+      </div>
+
       {/* Main content */}
       <main className="flex-1 flex items-start justify-center px-4 py-8 sm:px-6">
+        {tab === 'scraper' ? (
         <div className="w-full max-w-xl">
           {/* Card */}
           <div
@@ -81,7 +97,6 @@ function App() {
             {/* Card body */}
             <div className="p-6">
               <ScraperForm
-                outputPath={destination}
                 serperKey={serperKey}
                 onRunningChange={setRunning}
               />
@@ -93,6 +108,9 @@ function App() {
             ToBePolo Scraper · Colombo v1.0.0
           </p>
         </div>
+        ) : (
+          <ResultsView />
+        )}
       </main>
     </div>
   )

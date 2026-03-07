@@ -1,22 +1,18 @@
 import React from 'react'
-import { FolderOpen, SlidersHorizontal, Key, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { SlidersHorizontal, Key, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { Button } from './ui/Button'
 
 interface ConfigBarProps {
-  destination: string
   serperKey: string
   serperKeyStatus?: 'idle' | 'checking' | 'valid' | 'invalid'
   onSerperKeyChange: (key: string) => void
-  onSetDestination: () => void
   onAdvanced: () => void
 }
 
 export const ConfigBar: React.FC<ConfigBarProps> = ({
-  destination,
   serperKey,
   serperKeyStatus = 'idle',
   onSerperKeyChange,
-  onSetDestination,
   onAdvanced,
 }) => {
   return (
@@ -55,26 +51,6 @@ export const ConfigBar: React.FC<ConfigBarProps> = ({
 
       {/* Divider */}
       <div className="hidden sm:block w-px h-5 bg-zinc-800" />
-
-      {/* Destination */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          icon={<FolderOpen size={13} />}
-          onClick={onSetDestination}
-        >
-          Destination
-        </Button>
-        {destination && (
-          <span
-            className="truncate text-[11px] text-zinc-600 font-mono max-w-[180px]"
-            title={destination}
-          >
-            {destination}
-          </span>
-        )}
-      </div>
 
       {/* Advanced */}
       <Button

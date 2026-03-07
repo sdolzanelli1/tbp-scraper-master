@@ -23,12 +23,11 @@ const defaultForm: FormState = {
 }
 
 interface ScraperFormProps {
-  outputPath: string
   serperKey: string
   onRunningChange: (running: boolean) => void
 }
 
-export const ScraperForm: React.FC<ScraperFormProps> = ({ outputPath, serperKey, onRunningChange }) => {
+export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningChange }) => {
   const [form, setForm] = useState<FormState>(defaultForm)
   const [running, setRunning] = useState(false)
   const [data, setData] = useState<ScraperData>({ tags: [], regions: [], locations: [] })
@@ -94,7 +93,6 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ outputPath, serperKey,
           startingTag: form.startingTag,
           customQuery: form.customQuery,
           serperKey,
-          outputPath,
         }),
       })
       if (!res.ok) {

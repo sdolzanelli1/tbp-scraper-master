@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url'
 import path from 'path'
 import { scrapeResults, stopScrape, validateSerperKey } from '../scripts/scraper/scraper.js'
 import { loadTags, loadLocations } from '../scripts/scraper/parseCSV.js'
+import db from '../scripts/scraper/db.js'
 
 export const scrapeRouter = express.Router()
 
@@ -38,7 +39,6 @@ export interface ScrapePayload {
   startingTag?: string
   customQuery?: string
   serperKey?: string
-  outputPath?: string
 }
 
 /**
@@ -61,7 +61,7 @@ scrapeRouter.post('/validate-key', async (req: Request, res: Response) => {
  * Kick off a scrape job.
  */
 scrapeRouter.post('/', async (req: Request, res: Response) => {
-  const { region, city, startingTag, customQuery, serperKey, outputPath } = req.body as ScrapePayload
+  const { region, city, startingTag, customQuery, serperKey } = req.body as ScrapePayload
 
   if (!region || !city) {
     res.status(400).json({ error: 'region and city are required' })
@@ -81,7 +81,6 @@ scrapeRouter.post('/', async (req: Request, res: Response) => {
 
   const config = {
     serperKey: serperKey || process.env.SERPERDEV_KEY,
-    outputPath: outputPath || process.env.OUTPUT_PATH || '.',
   }
 
   console.log('[scrape] Starting job', { region, city, startingTag, customQuery })
@@ -118,4 +117,27 @@ scrapeRouter.get('/status', (_req: Request, res: Response) => {
  */
 scrapeRouter.get('/data', (_req: Request, res: Response) => {
   res.json({ tags, regions, locations })
+})
+
+/**
+ * GET /api/scrape/runs
+ * Return all scraping runs, most recent first.
+ */
+scrapeRouter.get('/runs', (_req: Request, res: Response) => {
+  const runs = db.prepare('SELECT * FROM scraping_runs ORDER BY id DESC').all()
+  res.json(runs)
+})
+
+/**
+ * GET /api/scrape/runs/:id/results
+ * Return all results for a given run.
+ */
+scrapeRouter.get('/runs/:id/results', (req: Request, res: Response) => {
+  const runId = Number(req.params.id)
+  if (!Number.isInteger(runId)) {
+    res.status(400).json({ error: 'Invalid run id' })
+    return
+  }
+  const results = db.prepare('SELECT * FROM results WHERE run_id = ? ORDER BY id ASC').all(runId)
+  res.json(results)
 })

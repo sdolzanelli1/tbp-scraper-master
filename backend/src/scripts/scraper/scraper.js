@@ -1,8 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 import { logger } from '../../utils/logger.js';
-import { createCsvStream } from './writeCSV.js';
-import path from 'path';
-import fs from 'fs';
+import { createRun, finalizeRun, insertResult } from './db.js';
 import puppeteer from 'puppeteer';
 import _ from 'lodash';
 import axios from 'axios';
@@ -19,9 +17,7 @@ import {
 // puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 let browser = null;
 let stopScraping = false;
-// store a reference to the current csv stream end function so we can
-// close the file when scraping is aborted via IPC
-let currentCsvEnd = null;
+let currentRunId = null;
 const headless = process.env.NODE_ENV === 'production';
 
 export const formatData = (data) => {
@@ -241,24 +237,8 @@ export const scrapeLinks = async (query, apiKey) => {
 };
 
 
-// helper to generate a unique filepath by appending _2, _3, etc. if the base already exists
-export const getUniquePath = (dir, baseName) => {
-  let counter = 1;
-  let candidate = path.join(dir, `${baseName}.csv`);
-  while (fs.existsSync(candidate)) {
-    counter += 1;
-    candidate = path.join(dir, `${baseName}_${counter}.csv`);
-  }
-  return candidate;
-};
-
-export const getStringWithDashInsteadOfSpaces = (str) => {
-  return str.replace(/\s+/g, '-');
-};
-
 export const scrapeResults = async (query, tags, config = {}) => {
   const serperKey = config.serperKey || process.env.SERPERDEV_KEY || '';
-  const outputPath = config.outputPath || process.env.OUTPUT_PATH || '.';
 
   await initBrowser();
 
@@ -279,11 +259,8 @@ export const scrapeResults = async (query, tags, config = {}) => {
 
   logger('Serper.dev API key validated successfully');
 
-  // pick a unique csv file name so we don't overwrite previous results
-  const csvFile = getUniquePath(outputPath, 'tbp_' + getStringWithDashInsteadOfSpaces(query.location) + '_results');
-  const { write: writeCsvRecord, end: endCsv } = createCsvStream(csvFile);
-  // keep reference so stopScrape() can close the stream
-  currentCsvEnd = endCsv;
+  currentRunId = createRun();
+  logger(`DB: created scraping run #${currentRunId}`);
 
   let links = [];
 
@@ -296,7 +273,7 @@ export const scrapeResults = async (query, tags, config = {}) => {
         const res = await scrapeWebpage(link);
         if (res) {
           res.tag = query.custom;
-          writeCsvRecord(res);
+          insertResult(currentRunId, res);
         }
       }
       logger(`END: ${query.custom}`);
@@ -311,17 +288,17 @@ export const scrapeResults = async (query, tags, config = {}) => {
           const res = await scrapeWebpage(link);
           if (res) {
             res.tag = tag;
-            writeCsvRecord(res);
+            insertResult(currentRunId, res);
           }
         }
         logger(`END: ${tag} ${query.location}`);
       }
     }
   } finally {
-    // always close the csv stream even if we aborted or errored
-    if (currentCsvEnd) {
-      await currentCsvEnd();
-      currentCsvEnd = null;
+    if (currentRunId !== null) {
+      finalizeRun(currentRunId);
+      logger(`DB: finalized scraping run #${currentRunId}`);
+      currentRunId = null;
     }
     if (browser) {
       await browser.close();
@@ -333,13 +310,14 @@ export const scrapeResults = async (query, tags, config = {}) => {
 export const stopScrape = async () => {
   logger(`STOPPED`);
   stopScraping = true;
-  if (currentCsvEnd) {
+  if (currentRunId !== null) {
     try {
-      await currentCsvEnd();
+      finalizeRun(currentRunId);
+      logger(`DB: finalized scraping run #${currentRunId} on stop`);
     } catch (e) {
-      logger(`error closing csv stream: ${e.message}`);
+      logger(`error finalizing run: ${e.message}`);
     }
-    currentCsvEnd = null;
+    currentRunId = null;
   }
   if (browser) await browser.close();
 };
