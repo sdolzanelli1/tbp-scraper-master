@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { RefreshCw, ChevronRight, ChevronDown, ExternalLink, Download } from 'lucide-react'
+import { apiFetch } from '../utils/api'
 
 interface Run {
   id: number
@@ -111,7 +112,7 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
     setLoading(true)
     lastIdRef.current = 0
     newFromIdRef.current = null
-    fetch(`/api/scrape/runs/${runId}/results`)
+    apiFetch(`/api/scrape/runs/${runId}/results`)
       .then((r) => r.json())
       .then((data: Result[]) => {
         setResults(data)
@@ -125,7 +126,7 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
   useEffect(() => {
     if (!isRunning) return
     const id = setInterval(() => {
-      fetch(`/api/scrape/runs/${runId}/results?after=${lastIdRef.current}`)
+      apiFetch(`/api/scrape/runs/${runId}/results?after=${lastIdRef.current}`)
         .then((r) => r.json())
         .then((data: Result[]) => {
           if (data.length > 0) {
@@ -201,7 +202,7 @@ export const ResultsView: React.FC = () => {
 
   const loadRuns = useCallback(() => {
     setLoadingRuns(true)
-    fetch('/api/scrape/runs')
+    apiFetch('/api/scrape/runs')
       .then((r) => r.json())
       .then((data: Run[]) => {
         setRuns(data)
@@ -215,7 +216,7 @@ export const ResultsView: React.FC = () => {
 
   // Silently refresh the runs sidebar every 5s while the selected run is in progress
   const refreshRunsSilent = useCallback(() => {
-    fetch('/api/scrape/runs')
+    apiFetch('/api/scrape/runs')
       .then((r) => r.json())
       .then((data: Run[]) => setRuns(data))
       .catch(() => {})
@@ -234,6 +235,18 @@ export const ResultsView: React.FC = () => {
   const handleRefresh = () => {
     loadRuns()
     setRefreshSignal((s) => s + 1)
+  }
+
+  const handleExport = async () => {
+    if (selectedRunId === null) return
+    const res = await apiFetch(`/api/scrape/runs/${selectedRunId}/export`)
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `run_${selectedRunId}_results.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -286,14 +299,13 @@ export const ResultsView: React.FC = () => {
               <>
                 {/* Export bar */}
                 <div className="flex items-center justify-end px-4 py-2 border-b border-zinc-700/60 shrink-0">
-                  <a
-                    href={`/api/scrape/runs/${selectedRunId}/export`}
-                    download
+                  <button
+                    onClick={handleExport}
                     className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors px-2 py-1 rounded-md hover:bg-zinc-700/60"
                   >
                     <Download size={12} />
                     Export CSV
-                  </a>
+                  </button>
                 </div>
                 <div className="flex-1 overflow-auto min-w-0">
                   <ResultsTable runId={selectedRunId} isRunning={isSelectedRunning} refreshSignal={refreshSignal} />

@@ -1,17 +1,29 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Header } from './components/Header'
 import { ConfigBar } from './components/ConfigBar'
 import { ScraperForm } from './components/ScraperForm'
 import { ResultsView } from './components/ResultsView'
+import { LoginForm } from './components/LoginForm'
+import { getToken, clearToken, registerUnauthorizedHandler, apiFetch } from './utils/api'
 
 type Tab = 'scraper' | 'results'
 
 function App() {
+  const [loggedIn, setLoggedIn] = useState(() => !!getToken())
   const [tab, setTab] = useState<Tab>('scraper')
   const [serperKey, setSerperKey] = useState(() => localStorage.getItem('serperKey') ?? '')
   const [serperKeyStatus, setSerperKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle')
   const [running, setRunning] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    registerUnauthorizedHandler(() => setLoggedIn(false))
+  }, [])
+
+  const handleLogout = () => {
+    clearToken()
+    setLoggedIn(false)
+  }
 
   const handleSerperKeyChange = (key: string) => {
     setSerperKey(key)
@@ -24,7 +36,7 @@ function App() {
     setSerperKeyStatus('checking')
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch('/api/scrape/validate-key', {
+        const res = await apiFetch('/api/scrape/validate-key', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ serperKey: key }),
@@ -37,12 +49,16 @@ function App() {
     }, 600)
   }
 
+  if (!loggedIn) {
+    return <LoginForm onLogin={() => setLoggedIn(true)} />
+  }
+
   return (
     <div
       className="flex flex-col min-h-screen"
       style={{ background: '#161616' }}
     >
-      <Header running={running} />
+      <Header running={running} onLogout={handleLogout} />
 
       <ConfigBar
         serperKey={serperKey}

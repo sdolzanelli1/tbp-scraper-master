@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Globe2, MapPin, Tag, Search, Play, Square, RotateCcw, Pencil } from 'lucide-react'
 import { Button } from './ui/Button'
+import { apiFetch } from '../utils/api'
 
 interface ScraperData {
   tags: string[]
@@ -37,7 +38,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
 
   // Load tags/regions/locations from backend
   useEffect(() => {
-    fetch('/api/scrape/data')
+    apiFetch('/api/scrape/data')
       .then((r) => r.json())
       .then((d: ScraperData) => {
         setData(d)
@@ -50,7 +51,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
 
   // Sync running state with backend on mount (restores state after tab refresh)
   useEffect(() => {
-    fetch('/api/scrape/status')
+    apiFetch('/api/scrape/status')
       .then((r) => r.json())
       .then(({ status }: { status: string }) => {
         if (status === 'running') {
@@ -67,7 +68,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
     if (!running) return
     const id = setInterval(async () => {
       try {
-        const r = await fetch('/api/scrape/status')
+        const r = await apiFetch('/api/scrape/status')
         const { status } = await r.json()
         if (status !== 'running') {
           setRunning(false)
@@ -100,7 +101,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
     setRunning(true)
     onRunningChange(true)
     try {
-      const res = await fetch('/api/scrape', {
+      const res = await apiFetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,7 +126,7 @@ export const ScraperForm: React.FC<ScraperFormProps> = ({ serperKey, onRunningCh
 
   const handleStop = async () => {
     try {
-      await fetch('/api/scrape/stop', { method: 'POST' })
+      await apiFetch('/api/scrape/stop', { method: 'POST' })
     } finally {
       setRunning(false)
       onRunningChange(false)

@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import { scrapeRouter } from './routes/scrape.ts'
+import { authRouter } from './routes/auth.ts'
+import { requireAuth } from './middleware/auth.ts'
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
@@ -9,7 +11,8 @@ app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' }))
 app.use(express.json())
 
 // ── Routes ──────────────────────────────────────────────
-app.use('/api/scrape', scrapeRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/scrape', requireAuth, scrapeRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', version: '1.0.0' })

@@ -1,10 +1,12 @@
 import React from 'react'
+import { LogOut } from 'lucide-react'
 
 interface HeaderProps {
   running: boolean
+  onLogout?: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ running }) => {
+export const Header: React.FC<HeaderProps> = ({ running, onLogout }) => {
   return (
     <header
       className="flex items-center gap-4 px-6 py-4 border-b border-zinc-700/80"
@@ -30,8 +32,8 @@ export const Header: React.FC<HeaderProps> = ({ running }) => {
         </p>
       </div>
 
-      {/* Status badge */}
-      <div className="ml-auto flex items-center gap-2">
+      {/* Status badge + logout */}
+      <div className="ml-auto flex items-center gap-3">
         {running ? (
           <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 rounded-full px-3 py-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -42,6 +44,15 @@ export const Header: React.FC<HeaderProps> = ({ running }) => {
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
             Idle
           </span>
+        )}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            title="Sign out"
+            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-1 rounded-md hover:bg-zinc-700/60"
+          >
+            <LogOut size={13} />
+          </button>
         )}
       </div>
     </header>
