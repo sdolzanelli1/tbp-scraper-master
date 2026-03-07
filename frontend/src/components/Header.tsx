@@ -26,19 +26,21 @@ export const Header: React.FC<HeaderProps> = ({ running, onLogout }) => {
         </p>
       </div>
 
-      {/* Status badge + logout */}
+      {/* Status badge */}
+      {running ? (
+        <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 rounded-full px-3 py-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Running
+        </span>
+      ) : (
+        <span className="flex items-center gap-1.5 text-xs text-zinc-500 bg-zinc-800 border border-zinc-700 rounded-full px-3 py-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
+          Idle
+        </span>
+      )}
+
+      {/* Logout */}
       <div className="ml-auto flex items-center gap-3">
-        {running ? (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 rounded-full px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Running
-          </span>
-        ) : (
-          <span className="flex items-center gap-1.5 text-xs text-zinc-500 bg-zinc-800 border border-zinc-700 rounded-full px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-            Idle
-          </span>
-        )}
         {onLogout && (
           <button
             onClick={onLogout}

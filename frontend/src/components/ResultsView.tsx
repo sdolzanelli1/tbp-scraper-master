@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { RefreshCw, ChevronRight, ChevronDown, ExternalLink, Download } from 'lucide-react'
+import { RefreshCw, ChevronRight, ChevronDown, ExternalLink, Download, Loader2 } from 'lucide-react'
 import { apiFetch } from '../utils/api'
 
 interface Run {
@@ -101,7 +101,7 @@ const RunRow: React.FC<{ run: Run; isActive: boolean; onSelect: () => void }> = 
   </button>
 )
 
-const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal: number }> = ({ runId, isRunning, refreshSignal }) => {
+const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal: number; onCountChange: (n: number) => void }> = ({ runId, isRunning, refreshSignal, onCountChange }) => {
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(true)
   const lastIdRef = useRef(0)
@@ -116,6 +116,7 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
       .then((r) => r.json())
       .then((data: Result[]) => {
         setResults(data)
+        onCountChange(data.length)
         if (data.length > 0) lastIdRef.current = data[0].id
       })
       .catch(() => setResults([]))
@@ -131,7 +132,11 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
         .then((data: Result[]) => {
           if (data.length > 0) {
             newFromIdRef.current = data[data.length - 1].id
-            setResults((prev) => [...data, ...prev])
+            setResults((prev) => {
+              const next = [...data, ...prev]
+              onCountChange(next.length)
+              return next
+            })
             lastIdRef.current = data[0].id
           }
         })
@@ -184,9 +189,6 @@ const ResultsTable: React.FC<{ runId: number; isRunning: boolean; refreshSignal:
           ))}
         </tbody>
       </table>
-      <div className="px-4 py-2 text-[11px] text-zinc-600 border-t border-zinc-700/60">
-        {results.length} result{results.length !== 1 ? 's' : ''}
-      </div>
     </div>
   )
 }
@@ -196,6 +198,7 @@ export const ResultsView: React.FC = () => {
   const [selectedRunId, setSelectedRunId] = useState<number | null>(null)
   const [loadingRuns, setLoadingRuns] = useState(true)
   const [refreshSignal, setRefreshSignal] = useState(0)
+  const [resultCount, setResultCount] = useState<number | null>(null)
 
   const selectedRun = runs.find((r) => r.id === selectedRunId) ?? null
   const isSelectedRunning = selectedRun ? !selectedRun.end_time : false
@@ -234,6 +237,7 @@ export const ResultsView: React.FC = () => {
 
   const handleRefresh = () => {
     loadRuns()
+    setResultCount(null)
     setRefreshSignal((s) => s + 1)
   }
 
@@ -283,7 +287,7 @@ export const ResultsView: React.FC = () => {
                   key={run.id}
                   run={run}
                   isActive={selectedRunId === run.id}
-                  onSelect={() => setSelectedRunId(run.id)}
+                  onSelect={() => { setSelectedRunId(run.id); setResultCount(null) }}
                 />
               ))
             )}
@@ -298,7 +302,11 @@ export const ResultsView: React.FC = () => {
             ) : (
               <>
                 {/* Export bar */}
-                <div className="flex items-center justify-end px-4 py-2 border-b border-zinc-700/60 shrink-0">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-700/60 shrink-0">
+                  <span className="flex items-center gap-1.5 text-[11px] text-zinc-500 font-mono">
+                    {isSelectedRunning && <Loader2 size={11} className="animate-spin text-emerald-400" />}
+                    {resultCount !== null ? `${resultCount} result${resultCount !== 1 ? 's' : ''}` : ''}
+                  </span>
                   <button
                     onClick={handleExport}
                     className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors px-2 py-1 rounded-md hover:bg-zinc-700/60"
@@ -308,7 +316,7 @@ export const ResultsView: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex-1 overflow-auto min-w-0">
-                  <ResultsTable runId={selectedRunId} isRunning={isSelectedRunning} refreshSignal={refreshSignal} />
+                  <ResultsTable runId={selectedRunId} isRunning={isSelectedRunning} refreshSignal={refreshSignal} onCountChange={setResultCount} />
                 </div>
               </>
             )}
