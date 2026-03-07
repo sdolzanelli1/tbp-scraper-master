@@ -4,11 +4,8 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const { dependencies: externals } = require('../app/package.json');
 
 module.exports = {
-  externals: [...Object.keys(externals || {})],
-
   module: {
     rules: [
       {
@@ -26,8 +23,6 @@ module.exports = {
 
   output: {
     path: path.join(__dirname, '..', 'app'),
-    // https://github.com/webpack/webpack/issues/1114
-    libraryTarget: 'commonjs2',
   },
 
   /**

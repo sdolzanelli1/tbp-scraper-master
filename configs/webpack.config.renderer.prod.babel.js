@@ -1,5 +1,5 @@
 /**
- * Build config for electron renderer process
+ * Build config for web renderer process
  */
 
 import path from 'path';
@@ -21,10 +21,7 @@ export default merge(baseConfig, {
 
   mode: 'production',
 
-  target:
-    process.env.E2E_BUILD || process.env.ERB_SECURE !== 'true'
-      ? 'electron-renderer'
-      : 'electron-preload',
+  target: 'web',
 
   entry: [
     'core-js',
@@ -34,8 +31,8 @@ export default merge(baseConfig, {
 
   output: {
     path: path.join(__dirname, '..', 'app/dist'),
-    publicPath: './dist/',
-    filename: 'renderer.prod.js',
+    publicPath: '/dist/',
+    filename: 'renderer.js',
   },
 
   module: {

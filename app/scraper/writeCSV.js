@@ -5,8 +5,6 @@ import { logger } from '../utils/logger';
 const fs = require('fs');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
-const { dialog } = require('electron');
-const Store = require('electron-store');
 const _ = require('lodash');
 
 // column definitions for csv output; a tag field is now included so
@@ -63,26 +61,16 @@ export const getCSV = (records) => {
   return `${header}${body}`;
 };
 
-export const saveFileDialog = async (records, title) => {
+export const saveFileDialog = (records, title, outputDir = '.') => {
   const csv = getCSV(records);
-  const options = {
-    title: 'Save file',
-    defaultPath: title,
-    buttonLabel: 'Save',
-    filters: [{ name: 'csv', extensions: ['csv'] }],
-  };
-
-  const savepath = await dialog.showSaveDialog(options);
-  fs.writeFileSync(savepath.filePath, csv, 'utf-8');
-  logger('OUTPUT: csv file written');
+  const savepath = path.join(outputDir, `${_.snakeCase(title)}.csv`);
+  fs.writeFileSync(savepath, csv, 'utf-8');
+  logger(`OUTPUT: csv file written ${savepath}`);
 };
 
-export const saveFile = async (records, title) => {
+export const saveFile = (records, title, outputDir = '.') => {
   const csv = getCSV(records);
-  const store = new Store();
-  const outputPath = store.get('outputPath');
-
-  const savepath = path.join(outputPath, _.snakeCase(title));
+  const savepath = path.join(outputDir, _.snakeCase(title));
   fs.writeFileSync(`${savepath}.csv`, csv, 'utf-8');
   logger(`OUTPUT: csv file written ${savepath}.csv`);
 };

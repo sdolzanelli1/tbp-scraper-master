@@ -1,16 +1,13 @@
 /**
- * Build config for development electron renderer process that uses
+ * Build config for development web renderer process that uses
  * Hot-Module-Replacement
  *
  * https://webpack.js.org/concepts/hot-module-replacement/
  */
 
 import path from 'path';
-import fs from 'fs';
 import webpack from 'webpack';
-import chalk from 'chalk';
 import { merge } from 'webpack-merge';
-import { spawn, execSync } from 'child_process';
 import baseConfig from './webpack.config.base';
 import CheckNodeEnv from '../internals/scripts/CheckNodeEnv';
 
@@ -22,42 +19,26 @@ if (process.env.NODE_ENV === 'production') {
 
 const port = process.env.PORT || 1212;
 const publicPath = `http://localhost:${port}/dist`;
-const dll = path.join(__dirname, '..', 'dll');
-const manifest = path.resolve(dll, 'renderer.json');
-const requiredByDLLConfig = module.parent.filename.includes(
-  'webpack.config.renderer.dev.dll'
-);
-
-/**
- * Warn if the DLL is not built
- */
-if (!requiredByDLLConfig && !(fs.existsSync(dll) && fs.existsSync(manifest))) {
-  console.log(
-    chalk.black.bgYellow.bold(
-      'The DLL files are missing. Sit back while we build them for you with "yarn build-dll"'
-    )
-  );
-  execSync('yarn build-dll');
-}
 
 export default merge(baseConfig, {
   devtool: 'inline-source-map',
 
   mode: 'development',
 
-  target: 'electron-renderer',
+  target: 'web',
 
   entry: [
     'core-js',
     'regenerator-runtime/runtime',
     ...(process.env.PLAIN_HMR ? [] : ['react-hot-loader/patch']),
     'webpack/hot/only-dev-server',
-    require.resolve('../app/index.tsx'),
+    path.join(__dirname, '..', 'app/index.tsx'),
   ],
 
   output: {
     publicPath: `http://localhost:${port}/dist/`,
-    filename: 'renderer.dev.js',
+    filename: 'renderer.js',
+    path: path.join(__dirname, '..', 'app/dist'),
   },
 
   module: {
@@ -193,20 +174,7 @@ export default merge(baseConfig, {
       },
     ],
   },
-  resolve: {
-    alias: {
-      'react-dom': '@hot-loader/react-dom',
-    },
-  },
   plugins: [
-    requiredByDLLConfig
-      ? null
-      : new webpack.DllReferencePlugin({
-          context: path.join(__dirname, '..', 'dll'),
-          manifest: require(manifest),
-          sourceType: 'var',
-        }),
-
     new webpack.HotModuleReplacementPlugin({
       multiStep: true,
     }),
@@ -234,18 +202,13 @@ export default merge(baseConfig, {
     }),
   ],
 
-  node: {
-    __dirname: false,
-    __filename: false,
-  },
-
   devServer: {
     port,
     compress: true,
     hot: true,
     headers: { 'Access-Control-Allow-Origin': '*' },
     static: {
-      directory: path.join(__dirname, 'dist'),
+      directory: path.join(__dirname, '..', 'app'),
     },
     devMiddleware: {
       publicPath,
@@ -254,18 +217,6 @@ export default merge(baseConfig, {
     historyApiFallback: {
       verbose: true,
       disableDotRule: false,
-    },
-    onBeforeSetupMiddleware() {
-      if (process.env.START_HOT) {
-        console.log('Starting Main Process...');
-        spawn('npm', ['run', 'start-main-dev'], {
-          shell: true,
-          env: process.env,
-          stdio: 'inherit',
-        })
-          .on('close', (code) => process.exit(code))
-          .on('error', (spawnError) => console.error(spawnError));
-      }
     },
   },
 });

@@ -4,99 +4,112 @@ import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import iconImage from '../../resources/icon.png';
 
-const { ipcRenderer } = require('electron');
+const API_BASE = process.env.API_BASE_URL || 'http://localhost:3001/api';
+
+type Option = {
+  value: string;
+  label: string;
+};
+
+type LocationsRow = Record<string, string>;
 
 export default function Home(): JSX.Element {
   const [tag, setTag] = useState('');
-  const [tags, setTags] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [filteredLocations, setFilteredLocations] = useState([]);
-  const [regions, setRegions] = useState([]);
+  const [tags, setTags] = useState<Option[]>([]);
+  const [locations, setLocations] = useState<LocationsRow[]>([]);
+  const [filteredLocations, setFilteredLocations] = useState<Option[]>([]);
+  const [regions, setRegions] = useState<Option[]>([]);
   const [outputPath, setOutputPath] = useState('');
-  const [currentRegion, setCurrentRegion] = useState(null);
-  const [currentLocation, setCurrentLocation] = useState(null);
-  const [logs, setLogs] = useState([]);
+  const [currentRegion, setCurrentRegion] = useState<string | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
   const [customQuery, setCustomQuery] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [btnDisabled, setBtnDisabled] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [serperKey, setSerperKey] = useState('');
   const [browserPath, setBrowserPath] = useState('');
-  const hasSerperKey = serperKey.trim().length > 0;
   const hasBrowserPath = browserPath.trim().length > 0;
 
-  if (tags.length === 0 || regions.length === 0) {
-    ipcRenderer.send('init');
-  }
-
-  // Add events listeners
   useEffect(() => {
-    // Populate location select inputs
-    ipcRenderer.on('init-reply', (_event, arg) => {
-      const regionArray = arg.regions.sort().map((r) => {
+    const loadInitialData = async () => {
+      const response = await fetch(`${API_BASE}/init`);
+      const data = await response.json();
+
+      const regionArray = data.regions.sort().map((r: string) => {
         return {
           value: r,
           label: r,
         };
       });
-      const tagsArray = arg.tags.map((t) => {
+
+      const tagsArray = data.tags.map((t: string) => {
         return {
           value: t,
           label: t,
         };
       });
-      const { locations: locationsArray } = arg;
+
+      const { locations: locationsArray } = data;
       setTags(tagsArray);
-      setTag(tagsArray[0].value)
+      if (tagsArray.length > 0) {
+        setTag(tagsArray[0].value);
+      }
       setRegions(regionArray);
       setLocations(locationsArray);
-      ipcRenderer.removeAllListeners('init-reply');
+    };
+
+    loadInitialData().catch((error) => {
+      setLogs((prevLogs) => [
+        `ERROR: Failed loading CSV data: ${error.message || error}`,
+        ...prevLogs,
+      ]);
     });
-
-    // load serper key from main if not present in localStorage
-    const localKey = window.localStorage.getItem('serperKey');
-    if (localKey) setSerperKey(localKey);
-    else {
-      ipcRenderer.send('get-serper-key');
-      ipcRenderer.on('get-serper-key-reply', (_e, key) => {
-        if (key) {
-          setSerperKey(key);
-          try { window.localStorage.setItem('serperKey', key); } catch (e) {}
-        }
-        ipcRenderer.removeAllListeners('get-serper-key-reply');
-      });
-    }
-
-    ipcRenderer.on('set-path-reply', (_event, arg) => {
-      if(arg) setOutputPath(arg);
-    })
-
-    ipcRenderer.on('set-browser-path-reply', (_event, arg) => {
-      if(arg) setBrowserPath(arg);
-    })
-
-    ipcRenderer.on('get-browser-path-reply', (_event, arg) => {
-      if(arg) setBrowserPath(arg);
-    })
-
-    ipcRenderer.on('scrape-stop', () => {
-      setIsScraping(false);
-    })
-
-    // Request browser path on mount
-    ipcRenderer.send('get-browser-path');
-
-    ipcRenderer.on('scrape-error', (_event, arg) => {
-      setIsScraping(false);
-      setLogs(logs => [`ERROR: ${arg.message}`, ...logs]);
-    })
-
-    ipcRenderer.on('logger', (_event, arg) => {
-      setLogs(logs => [arg.message, ...logs]);
-    })
   }, []);
 
-  const openKeyModal = (e) => {
+  useEffect(() => {
+    const pollStatus = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/status`);
+        const data = await response.json();
+
+        setIsScraping(Boolean(data.isScraping));
+        if (Array.isArray(data.logs)) setLogs(data.logs);
+
+        if (data.settings) {
+          if (typeof data.settings.outputPath === 'string') {
+            setOutputPath(data.settings.outputPath);
+          }
+          if (typeof data.settings.browserPath === 'string') {
+            setBrowserPath(data.settings.browserPath);
+          }
+          if (typeof data.settings.serperKey === 'string') {
+            setSerperKey(data.settings.serperKey);
+            try {
+              window.localStorage.setItem('serperKey', data.settings.serperKey);
+            } catch (_error) {
+              // ignore local storage failures
+            }
+          }
+        }
+
+        if (data.lastError) {
+          setLogs((prevLogs) => [`ERROR: ${data.lastError}`, ...prevLogs]);
+        }
+      } catch (_error) {
+        // ignore transient polling errors
+      }
+    };
+
+    pollStatus();
+    const timer = window.setInterval(pollStatus, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const openKeyModal = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setShowKeyModal(true);
   };
@@ -105,37 +118,47 @@ export default function Home(): JSX.Element {
     setShowKeyModal(false);
   };
 
-  const saveSerperKey = (e) => {
+  const saveSerperKey = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const trimmedKey = serperKey.trim();
     setSerperKey(trimmedKey);
-    try { window.localStorage.setItem('serperKey', trimmedKey); } catch (err) {}
-    ipcRenderer.send('set-serper-key', trimmedKey);
+    try {
+      window.localStorage.setItem('serperKey', trimmedKey);
+    } catch (_err) {
+      // ignore local storage failures
+    }
+
+    fetch(`${API_BASE}/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serperKey: trimmedKey }),
+    });
+
     setShowKeyModal(false);
   };
 
-  const filterLocations = (e) => {
+  const filterLocations = (e: Option) => {
     setCurrentRegion(e.value);
     setCurrentLocation(null);
 
-    let currentLocations: any = [];
+    let currentLocations: string[] = [];
     locations
       .filter((l) => {
         return Object.keys(l)[0] === e.value;
       })
       .map((f) => currentLocations.push(f[Object.keys(f)[0]]));
 
-    currentLocations = currentLocations.sort().map((f) => {
+    const mappedLocations = currentLocations.sort().map((f) => {
       return {
         value: f,
         label: f,
       };
     });
 
-    setFilteredLocations(currentLocations);
+    setFilteredLocations(mappedLocations);
   };
 
-  const updateLocation = (e) => {
+  const updateLocation = (e: Option | null) => {
     if (e && e.value) {
       setCurrentLocation(e.value);
     } else {
@@ -143,7 +166,7 @@ export default function Home(): JSX.Element {
     }
   };
 
-  const updateTag = (e) => {
+  const updateTag = (e: Option | null) => {
     if (e && e.value) {
       setTag(e.value);
     } else {
@@ -166,25 +189,50 @@ export default function Home(): JSX.Element {
     }
   }, [currentLocation, outputPath, customQuery, hasBrowserPath]);
 
-  const startScraping = (e) => {
+  const startScraping = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsScraping(!isScraping);
     if(!isScraping){
       setLogs([]);
-      ipcRenderer.send('scrape-start', { location: currentLocation, tag, custom: customQuery, serperKey });
+      fetch(`${API_BASE}/scrape/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: currentLocation, tag, custom: customQuery, serperKey }),
+      }).catch((error) => {
+        setLogs((prevLogs) => [`ERROR: ${error.message || error}`, ...prevLogs]);
+        setIsScraping(false);
+      });
     } else{
-      ipcRenderer.send('scrape-stop');
+      fetch(`${API_BASE}/scrape/stop`, { method: 'POST' });
     }
   };
 
-  const onSetOutputPath = (e) => {
+  const onSetOutputPath = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    ipcRenderer.send('set-path');
+    const value = window.prompt('Insert output folder path', outputPath || '');
+    if (value && value.trim()) {
+      const trimmedValue = value.trim();
+      setOutputPath(trimmedValue);
+      fetch(`${API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputPath: trimmedValue }),
+      });
+    }
   };
 
-  const onSetBrowserPath = (e) => {
+  const onSetBrowserPath = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    ipcRenderer.send('set-browser-path');
+    const value = window.prompt('Insert Chrome executable path', browserPath || '');
+    if (value && value.trim()) {
+      const trimmedValue = value.trim();
+      setBrowserPath(trimmedValue);
+      fetch(`${API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ browserPath: trimmedValue }),
+      });
+    }
   };
 
 

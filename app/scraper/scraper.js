@@ -1,7 +1,4 @@
 /* eslint-disable no-restricted-syntax */
-import { ipcMain } from 'electron';
-import { getAssetPath } from '../utils/path';
-import { logger } from '../utils/logger';
 import { createCsvStream } from './writeCSV';
 import path from 'path';
 const fs = require('fs');
@@ -21,10 +18,8 @@ const puppeteer = require('puppeteer');
 // const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 // const AdblockerPlugin = require('puppeteer-extra-plugin-adblocker');
 const _ = require('lodash');
-const Store = require('electron-store');
 const axios = require('axios');
 
-const store = new Store();
 // puppeteer.use(StealthPlugin());
 // puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 let browser = null;
@@ -33,6 +28,32 @@ let stopScraping = false;
 // close the file when scraping is aborted via IPC
 let currentCsvEnd = null;
 const headless = process.env.NODE_ENV === 'production';
+let logHandler = (message) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${message}`);
+};
+let runtimeConfig = {
+  outputPath: '.',
+  browserPath: '',
+  serperKey: '',
+};
+
+export const setLogger = (loggerFn) => {
+  if (typeof loggerFn === 'function') {
+    logHandler = loggerFn;
+  }
+};
+
+export const setRuntimeConfig = (config = {}) => {
+  runtimeConfig = {
+    ...runtimeConfig,
+    ...config,
+  };
+};
+
+const logger = (message) => {
+  logHandler(message);
+};
 
 export const formatData = (data) => {
   const filterData = _.uniq(data);
@@ -50,8 +71,7 @@ export const initBrowser = async () => {
 
   if (browser) await browser.close();
   try {
-    // Get the user-configured browser path from store
-    let browserPath = store.get('browserPath');
+    let browserPath = runtimeConfig.browserPath;
     
     if (!browserPath) {
       throw new Error('Chrome browser path not configured. Please set your Chrome browser path in the application settings.');
@@ -227,8 +247,7 @@ export const validateSerperKey = async (apiKey) => {
 export const scrapeLinks = async (query) => {
   const links = [];
   try {
-    const runtimeStore = new Store();
-    let apiKey = runtimeStore.get('serperKey');
+    let apiKey = runtimeConfig.serperKey;
     if (apiKey && typeof apiKey !== 'string') apiKey = String(apiKey);
     if (!apiKey) {
       logger('Serper.dev key not found in env var SERPERDEV_KEY or store.serperKey');
@@ -291,11 +310,14 @@ export const getStringWithDashInsteadOfSpaces = (str) => {
 
 export const scrapeResults = async (query, tags) => {
   await initBrowser();
-  const store = new Store();
-  const outputPath = store.get('outputPath') || '.';
+  const outputPath = runtimeConfig.outputPath || '.';
   
   // Validate Serper API key before starting
-  let apiKey = store.get('serperKey');
+  let apiKey = runtimeConfig.serperKey;
+  if (query && query.serperKey) {
+    apiKey = query.serperKey;
+    runtimeConfig.serperKey = query.serperKey;
+  }
   if (apiKey && typeof apiKey !== 'string') apiKey = String(apiKey);
   
   if (!apiKey) {
@@ -314,7 +336,11 @@ export const scrapeResults = async (query, tags) => {
   logger('Serper.dev API key validated successfully');
   
   // pick a unique csv file name so we don't overwrite previous results
-  const csvFile = getUniquePath(outputPath, 'tbp_' + getStringWithDashInsteadOfSpaces(query.location) + '_results');
+  const locationForFile = query.location || 'custom';
+  const csvFile = getUniquePath(
+    outputPath,
+    `tbp_${getStringWithDashInsteadOfSpaces(locationForFile)}_results`
+  );
   const { write: writeCsvRecord, end: endCsv } = createCsvStream(csvFile);
   // keep global reference so the IPC handler can finish the stream
   currentCsvEnd = endCsv;
@@ -364,10 +390,9 @@ export const scrapeResults = async (query, tags) => {
   }
 };
 
-ipcMain.on('scrape-stop', async () => {
+export const stopScrape = async () => {
   logger(`STOPPED`);
   stopScraping = true;
-  // close any existing CSV stream so file handle is released
   if (currentCsvEnd) {
     try {
       await currentCsvEnd();
@@ -377,6 +402,6 @@ ipcMain.on('scrape-stop', async () => {
     currentCsvEnd = null;
   }
   if (browser) await browser.close();
-});
+};
 
 export default scrapeResults;
