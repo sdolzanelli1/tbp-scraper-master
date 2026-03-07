@@ -4,25 +4,26 @@ import { ConfigBar } from './components/ConfigBar'
 import { ScraperForm } from './components/ScraperForm'
 
 function App() {
-  const [chromePath, setChromePath] = useState(
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-  )
   const [destination, setDestination] = useState('')
+  const [serperKey, setSerperKey] = useState(() => localStorage.getItem('serperKey') ?? '')
+  const [running, setRunning] = useState(false)
+
+  const handleSerperKeyChange = (key: string) => {
+    setSerperKey(key)
+    localStorage.setItem('serperKey', key)
+  }
 
   return (
     <div
       className="flex flex-col min-h-screen"
       style={{ background: '#0d0d0d' }}
     >
-      <Header />
+      <Header running={running} />
 
       <ConfigBar
-        chromePath={chromePath}
         destination={destination}
-        onSetChrome={() => {
-          const path = window.prompt('Chrome executable path', chromePath)
-          if (path !== null) setChromePath(path)
-        }}
+        serperKey={serperKey}
+        onSerperKeyChange={handleSerperKeyChange}
         onSetDestination={() => {
           const dest = window.prompt('Output destination folder', destination)
           if (dest !== null) setDestination(dest)
@@ -52,7 +53,11 @@ function App() {
 
             {/* Card body */}
             <div className="p-6">
-              <ScraperForm />
+              <ScraperForm
+                outputPath={destination}
+                serperKey={serperKey}
+                onRunningChange={setRunning}
+              />
             </div>
           </div>
 
